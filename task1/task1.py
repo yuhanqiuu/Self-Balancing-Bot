@@ -12,7 +12,8 @@ import matplotlib.animation as animation
 def animate(i, dataList, ser):
     # 'i' is a incrementing variable based upon frames = x argument
     ser.write(b'g')                                     # Transmit the char 'g' to receive the Arduino data point
-    arduinoData_string = ser.readline().decode('ascii') # Decode receive Arduino data as a formatted string
+    arduinoData_string = ser.readline().decode('utf-8').strip() # Decode receive Arduino data as a formatted string
+   # arduinoData_string = ser.readline().decode('ascii') # Decode receive Arduino data as a formatted string
 
     try:
         arduinoData_float = float(arduinoData_string)   # Convert to float
@@ -37,7 +38,7 @@ fig = plt.figure()
 ax = fig.add_subplot(111)                               
 
 # Change the serial port and board rate to match the Arduino
-ser = serial.Serial("COM3", 9600)                       # Establish Serial object with COM port and BAUD rate to match Arduino Port/rate
+ser = serial.Serial("COM5", 9600)                       # Establish Serial object with COM port and BAUD rate to match Arduino Port/rate
 time.sleep(2)                                           # Time delay for Arduino Serial initialization 
 
                                                         # Matplotlib Animation Fuction that takes takes care of real time plot.
