@@ -18,6 +18,7 @@
 */
 
 #include "Arduino_BMI270_BMM150.h"
+#include <math.h>
 
 void setup() {
   Serial.begin(9600);
@@ -39,14 +40,21 @@ void setup() {
 
 void loop() {
   float x, y, z;
+  float theta;
 
   if (IMU.accelerationAvailable()) {
     IMU.readAcceleration(x, y, z);
+    theta = atan(x/y)*180/M_PI;
 
     Serial.print(x);
     Serial.print('\t');
     Serial.print(y);
     Serial.print('\t');
-    Serial.println(z);
+    // Serial.println(z);
+      
+    Serial.println(theta);
+
   }
+  delay(500);  // Reduce excessive polling
+
 }
