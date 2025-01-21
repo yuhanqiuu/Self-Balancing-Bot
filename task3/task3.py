@@ -28,9 +28,9 @@ def animate(i, dataList, ser):
     ax.clear()                                          # Clear last data frame
     ax.plot(dataList)                                   # Plot new data frame
     
-    ax.set_ylim([-90, 90])                              # Set Y axis limit of plot
-    ax.set_title("Arduino Accelerometer Angle Display")                        # Set title of figure
-    ax.set_ylabel("Angle measured with Accelerometer (degree)")                              # Set title of y axis 
+    ax.set_ylim([-180, 180])                              # Set Y axis limit of plot
+    ax.set_title("Arduino Gyroscope Angle Display")                        # Set title of figure
+    ax.set_ylabel("Angle measured with Gyroscope (degree)")                              # Set title of y axis 
     ax.set_xlabel("Time")
 
 dataList = []                                           # Initialize list to hold data points for animation
