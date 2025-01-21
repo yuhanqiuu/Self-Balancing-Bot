@@ -20,22 +20,24 @@
 #include "Arduino_BMI270_BMM150.h"
 #include <math.h>
 
+char userInput;
+
 void setup() {
   Serial.begin(9600);
   while (!Serial);
-  Serial.println("Started");
+  ;
 
   if (!IMU.begin()) {
     Serial.println("Failed to initialize IMU!");
     while (1);
   }
 
-  Serial.print("Accelerometer sample rate = ");
-  Serial.print(IMU.accelerationSampleRate());
-  Serial.println(" Hz");
-  Serial.println();
-  Serial.println("Acceleration in G's");
-  Serial.println("X\tY\tZ");
+  // Serial.print("Accelerometer sample rate = ");
+  // Serial.print(IMU.accelerationSampleRate());
+  // Serial.println(" Hz");
+  // Serial.println();
+  // Serial.println("Acceleration in G's");
+  // Serial.println("X\tY\tZ");
 }
 
 void loop() {
@@ -44,17 +46,29 @@ void loop() {
 
   if (IMU.accelerationAvailable()) {
     IMU.readAcceleration(x, y, z);
-    theta = atan(x/y)*180/M_PI;
+    theta = atan(y/z))*180/M_PI; // might need to change the axis later
 
     Serial.print(x);
     Serial.print('\t');
     Serial.print(y);
     Serial.print('\t');
-    // Serial.println(z);
-      
+    Serial.print(z);
+    Serial.print('\t');
     Serial.println(theta);
+      
+
+    // Check for serial input
+    if (Serial.available() > 0)
+    {
+      userInput = Serial.read();  // Read user input
+
+      if (userInput == 'g')  // If Python requests data
+      {
+        Serial.println(theta);
+      }
+    }
 
   }
-  delay(500);  // Reduce excessive polling
+  //delay(500);  // Reduce excessive polling
 
 }
