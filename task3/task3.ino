@@ -22,8 +22,6 @@ float theta = 0; // set the inital angle to 0. (initial condition)
 //unsigned long time; // might need to use the time to calculate the angle later.
 char userInput;
 
-int plusThreshold = 30, minusThreshold = -30;
-
 void setup()
 {
     Serial.begin(9600);
