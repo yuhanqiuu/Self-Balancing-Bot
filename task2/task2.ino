@@ -46,7 +46,7 @@ void loop() {
 
   if (IMU.accelerationAvailable()) {
     IMU.readAcceleration(x, y, z);
-    theta = atan(y/z))*180/M_PI; // might need to change the axis later
+    theta = atan(y/z)*180/M_PI; // might need to change the axis later
 
     Serial.print(x);
     Serial.print('\t');
