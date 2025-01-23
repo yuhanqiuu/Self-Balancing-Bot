@@ -20,11 +20,11 @@
 float x, y, z;
 float theta_gn = 0; // set the inital angle to 0. (initial condition)
 float theta_an;
-float theta_n;
-float theta_nPrv = 0;
+float theta_n = 0;
 
-float k = 0.3; // weighting factor
+float k = 0.1; // weighting factor
 char userInput;
+// unsigned long prevTime = 0;
 
 void setup()
 {
@@ -39,10 +39,15 @@ void setup()
         while (1)
             ;
     }
+
+    //prevTime = millis(); // Initialize timing
 }
 
 void loop()
 {   
+    // unsigned long currentTime = millis();
+    // float dt = (currentTime - prevTime) / 1000.0; // Convert to seconds
+    // prevTime = currentTime;
 
     if (IMU.accelerationAvailable()) {
     IMU.readAcceleration(x, y, z);
@@ -52,16 +57,19 @@ void loop()
     if (IMU.gyroscopeAvailable())
     {
     IMU.readGyroscope(x, y, z);
-    theta_gn = (theta_gn + x*(1/IMU.gyroscopeSampleRate()));
+    theta_gn += x*(1/ IMU.gyroscopeSampleRate());
     }
 
-    theta_n = k *(theta_nPrv+theta_gn) + (1-k) * theta_an;
+    theta_n = k *(theta_n+theta_gn) + (1-k) * theta_an;
 
-    theta_nPrv = theta_n; // update the previous angle
+    //theta_nPrv = theta_n; // update the previous angle
 
     Serial.print(theta_an);
     Serial.print('\t');
     Serial.print(theta_gn);
     Serial.print('\t');
     Serial.println(theta_n);
+
+    delay(50);
+
 }
