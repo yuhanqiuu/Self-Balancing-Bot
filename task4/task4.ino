@@ -70,6 +70,21 @@ void loop()
     Serial.print('\t');
     Serial.println(theta_n);
 
+    // Check for serial input
+    if (Serial.available() > 0)
+    {
+      userInput = Serial.read();  // Read user input
+
+      if (userInput == 'g')  // If Python requests data
+      {
+        Serial.print(theta_an);
+        Serial.print(",");
+        Serial.print(theta_gn);
+        Serial.print(",");
+        Serial.println(theta_n);
+      }
+    }
+
     delay(50);
 
 }
