@@ -30,13 +30,14 @@ def animate(i, theta_an_list, theta_gn_list, theta_n_list,ser):
     ax.plot(theta_n_list, label="Complementary", linestyle="dashed", color="green")  
 
 
-    ax.set_ylim([-180, 180])  # Set Y-axis limits
+    ax.set_ylim([-100, 100])  # Set Y-axis limits
+    ax.set_yticks(range(-100, 100, 10))  # Set Y-axis ticks every 5 degrees
     ax.set_title("Arduino Sensor Data")  
     ax.set_ylabel("Sensor Values (degrees)")  
     ax.set_xlabel("Time (samples)")  
     ax.legend()  # Add legend
 
-   # ax.grid(True, color='gray', linestyle='--', linewidth=0.5, alpha=0.7) # Add grids
+    ax.grid(True, color='gray', linestyle='--', linewidth=0.5, alpha=0.7) # Add grids
 
 # Initialize data storage
 theta_an_list = []
