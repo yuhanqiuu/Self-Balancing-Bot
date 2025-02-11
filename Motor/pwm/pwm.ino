@@ -14,18 +14,42 @@ void setup() {
 
 }
 
-void foward(pwm){
-  analogWrite(AIN1, pwm); 
-  digitalWrite(AIN2, LOW);
-  analogWrite(BIN1, pwm);
-  digitalWrite(BIN2, LOW);
+// foward fast decay
+
+void forward(int pwm){
+  analogWrite(AIN1, pwm);   
+  digitalWrite(AIN2, LOW);   
+  analogWrite(BIN1, pwm); 
+  digitalWrite(BIN2, LOW); 
+
 }
 
-void backward (pwm){
-  analogWrite(AIN2, pwm); 
-  digitalWrite(AIN1, LOW);
+
+// reverse fast decay
+void backward(int pwm) {  
+    digitalWrite(AIN1, LOW);   
+    analogWrite(AIN2, pwm);   
+    digitalWrite(BIN1, LOW); 
+    analogWrite(BIN2, pwm);  
+}
+
+// 25%, 75% of maximum rpm in opposite directions of each other
+
+//left forward, right backward
+// A left, B right
+void lfw_rbw(int pwm){ 
+  analogWrite(AIN1, pwm); 
+  digitalWrite(AIN2, LOW);
   analogWrite(BIN2, pwm);
   digitalWrite(BIN1, LOW);
+}
+
+//right foward, left backward
+void rfw_lbw(int pwm){ 
+  analogWrite(AIN2, pwm); 
+  digitalWrite(AIN1, LOW);
+  analogWrite(BIN1, pwm);
+  digitalWrite(BIN2, LOW);
 }
 
 void loop() {
@@ -39,10 +63,18 @@ void loop() {
   // 75% duty cycle; pwm = 191
   // 100% duty cycle; pwm = 255
 
-  forward(64)
-  delay(2000);
+  // forward(127);
+  // delay(3000);
 
-  
+
+  // backward(127);
+  // delay(3000);
+
+  // lfw_rbw(191);
+  // delay(3000);
+
+  rfw_lbw(255);
+  delay(3000);
 
   //delay(10);
 
