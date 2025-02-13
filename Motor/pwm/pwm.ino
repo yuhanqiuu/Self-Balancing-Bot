@@ -56,7 +56,6 @@ void lfw_rbw(int pwm1, int pwm2){
   analogWrite(AIN1, pwm1);  
   digitalWrite(AIN2, LOW);
   
-  // Left motor backward
   analogWrite(BIN2, pwm2);
   digitalWrite(BIN1, LOW);
 
@@ -75,41 +74,45 @@ void loop() {
 
   // //---------------------------------------------------------------
 
-  // forward(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
+  // rfw_lbw(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
   // delay(3000); // wait for 5 sec
 
-  // forward(rpm_to_pwm_left(420 * 3 / 4), rpm_to_pwm_right(437 * 3 / 4));
-  // delay(3000); 
 
-  // forward(rpm_to_pwm_left(420 / 2), rpm_to_pwm_right(437 / 2));
-  // delay(3000); 
+  forward(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
+  delay(3000); // wait for 5 sec
 
-  // forward(rpm_to_pwm_left(420 / 4), rpm_to_pwm_right(437 / 4));
-  // delay(3000);
+  forward(rpm_to_pwm_left(420 * 3 / 4), rpm_to_pwm_right(437 * 3 / 4));
+  delay(3000); 
 
-  // //---------------------------------------------------------------
+  forward(rpm_to_pwm_left(420 / 2), rpm_to_pwm_right(437 / 2));
+  delay(3000); 
 
-  // backward(rpm_to_pwm_left(420 * 3 / 4), rpm_to_pwm_right(437 * 3 / 4));
-  // delay(3000); 
-
-  // backward(rpm_to_pwm_left(420 / 4), rpm_to_pwm_right(437 / 4));
-  // delay(3000);
-
-  // //---------------------------------------------------------------
-  
-  lfw_rbw(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
+  forward(rpm_to_pwm_left(420 / 4), rpm_to_pwm_right(437 / 4));
   delay(3000);
 
-  // lfw_rbw(rpm_to_pwm_left(420 / 4), rpm_to_pwm_right(437 / 4));
-  // delay(3000);
+  //---------------------------------------------------------------
 
-  // //---------------------------------------------------------------
+  backward(rpm_to_pwm_left(420 * 3 / 4), rpm_to_pwm_right(437 * 3 / 4));
+  delay(3000); 
 
-  // rfw_lbw(rpm_to_pwm_left(420*3/4), rpm_to_pwm_right(437*3/4));
-  // delay(3000);
+  backward(rpm_to_pwm_left(420 / 4), rpm_to_pwm_right(437 / 4));
+  delay(3000);
+
+  //---------------------------------------------------------------
   
-  // rfw_lbw(rpm_to_pwm_left(420/4), rpm_to_pwm_right(437/4));
-  // delay(3000);
+  lfw_rbw(rpm_to_pwm_left(420*3/4), rpm_to_pwm_right(437*3/4));
+  delay(3000);
+
+  lfw_rbw(rpm_to_pwm_left(420 / 4), rpm_to_pwm_right(437 / 4));
+  delay(3000);
+
+  //---------------------------------------------------------------
+
+  rfw_lbw(rpm_to_pwm_left(420*3/4), rpm_to_pwm_right(437*3/4));
+  delay(3000);
+  
+  rfw_lbw(rpm_to_pwm_left(420/4), rpm_to_pwm_right(437/4));
+  delay(3000);
 
   //delay(10);
 

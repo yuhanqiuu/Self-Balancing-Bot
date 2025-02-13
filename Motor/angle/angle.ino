@@ -21,8 +21,24 @@ float k = 0.15; // weighting factor
 char userInput;
 
 void setup() {
-  // put your setup code here, to run once:
+  Serial.begin(9600);
+  while (!Serial)
+      ;
+  Serial.println("Started");
 
+  if (!IMU.begin())
+  {
+      Serial.println("Failed to initialize IMU!");
+      while (1)
+          ;
+  }
+}
+
+void forward(int pwm1, int pwm2){
+  analogWrite(AIN1, pwm1);   
+  digitalWrite(AIN2, LOW);   
+  analogWrite(BIN1, pwm2); 
+  digitalWrite(BIN2, LOW); 
 }
 
 void loop() {
@@ -44,7 +60,7 @@ void loop() {
 
   // Map angle (0° = 0% speed, MAX_ANGLE° = 100% speed)
   int pwm = theta_n * 255 / 90;
-  // map(constrain(theta_n, 0, MAX_ANGLE), 0, MAX_ANGLE, 0, MAX_PWM);
+  if(theta_n > 30) forward(pwm, pwm);
 
   //--------------------------------------
 }
