@@ -3,6 +3,23 @@
 #define BIN2 4
 #define BIN1 5
 
+#include <math.h>
+
+// pwm=7.58e^(7.89E-3*rpm) with screw left wheel
+// max rpm = 420
+// ()(449,255)
+// 
+// pwm=8.33e^(7.55E-3*rpm) without screw
+// max rpm = 437
+//--------------------------------------
+
+float rpm_to_pwm_left(float rpm){
+  return 7.58 * exp(7.89E-3 * rpm); // return pwm
+}
+
+float rpm_to_pwm_right(float rpm){
+  return 8.33 * exp(7.55E-3 * rpm); // return pwm
+}
 
 
 void setup() {
@@ -16,65 +33,83 @@ void setup() {
 
 // foward fast decay
 
-void forward(int pwm){
-  analogWrite(AIN1, pwm);   
+void forward(int pwm1, int pwm2){
+  analogWrite(AIN1, pwm1);   
   digitalWrite(AIN2, LOW);   
-  analogWrite(BIN1, pwm); 
+  analogWrite(BIN1, pwm2); 
   digitalWrite(BIN2, LOW); 
-
 }
-
 
 // reverse fast decay
-void backward(int pwm) {  
+void backward(int pwm1, int pwm2) {  
     digitalWrite(AIN1, LOW);   
-    analogWrite(AIN2, pwm);   
+    analogWrite(AIN2, pwm1);   
     digitalWrite(BIN1, LOW); 
-    analogWrite(BIN2, pwm);  
+    analogWrite(BIN2, pwm2);  
 }
-
-// 25%, 75% of maximum rpm in opposite directions of each other
 
 //left forward, right backward
 // A left, B right
-void lfw_rbw(int pwm){ 
-  analogWrite(AIN1, pwm); 
+void lfw_rbw(int pwm1, int pwm2){ 
+
+  // Right motor forward
+  analogWrite(AIN1, pwm1);  
   digitalWrite(AIN2, LOW);
-  analogWrite(BIN2, pwm);
+  
+  // Left motor backward
+  analogWrite(BIN2, pwm2);
   digitalWrite(BIN1, LOW);
+
+ 
 }
 
 //right foward, left backward
-void rfw_lbw(int pwm){ 
-  analogWrite(AIN2, pwm); 
+void rfw_lbw(int pwm1, int pwm2){ 
+  analogWrite(AIN2, pwm1); 
   digitalWrite(AIN1, LOW);
-  analogWrite(BIN1, pwm);
-  digitalWrite(BIN2, LOW);
+  analogWrite(BIN2, pwm2);
+  digitalWrite(BIN1, LOW);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
 
-  // Forward direction for both motors
-  // PWM speed (0-255)
+  // //---------------------------------------------------------------
 
-  // 25% duty cycle; pwm = 64
-  // 50% duty cycle; pwm = 127
-  // 75% duty cycle; pwm = 191
-  // 100% duty cycle; pwm = 255
+  // forward(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
+  // delay(3000); // wait for 5 sec
 
-  // forward(127);
+  // forward(rpm_to_pwm_left(420 * 3 / 4), rpm_to_pwm_right(437 * 3 / 4));
+  // delay(3000); 
+
+  // forward(rpm_to_pwm_left(420 / 2), rpm_to_pwm_right(437 / 2));
+  // delay(3000); 
+
+  // forward(rpm_to_pwm_left(420 / 4), rpm_to_pwm_right(437 / 4));
   // delay(3000);
 
+  // //---------------------------------------------------------------
 
-  // backward(127);
+  // backward(rpm_to_pwm_left(420 * 3 / 4), rpm_to_pwm_right(437 * 3 / 4));
+  // delay(3000); 
+
+  // backward(rpm_to_pwm_left(420 / 4), rpm_to_pwm_right(437 / 4));
   // delay(3000);
 
-  // lfw_rbw(191);
-  // delay(3000);
-
-  rfw_lbw(255);
+  // //---------------------------------------------------------------
+  
+  lfw_rbw(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
   delay(3000);
+
+  // lfw_rbw(rpm_to_pwm_left(420 / 4), rpm_to_pwm_right(437 / 4));
+  // delay(3000);
+
+  // //---------------------------------------------------------------
+
+  // rfw_lbw(rpm_to_pwm_left(420*3/4), rpm_to_pwm_right(437*3/4));
+  // delay(3000);
+  
+  // rfw_lbw(rpm_to_pwm_left(420/4), rpm_to_pwm_right(437/4));
+  // delay(3000);
 
   //delay(10);
 
