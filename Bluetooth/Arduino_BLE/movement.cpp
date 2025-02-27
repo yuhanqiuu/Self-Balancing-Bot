@@ -50,3 +50,19 @@ void rfw_lbw(int pwm1, int pwm2) {
     analogWrite(BIN2, pwm2);
     digitalWrite(BIN1, LOW);
 }
+
+void goForward() {
+    forward(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
+}
+
+void goBackward() {
+    backward(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
+}
+
+void goRight() {
+    lfw_rbw(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
+}
+
+void goLeft() {
+    rfw_lbw(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
+}
