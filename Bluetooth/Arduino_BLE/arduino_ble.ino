@@ -42,42 +42,60 @@ void setup() {
 void loop() {
   // Wait for a BLE central to connect
 
-  forward(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
-  delay(3000); // wait for 5 sec
-  // BLEDevice central = BLE.central();
+  BLEDevice central = BLE.central();
   
+  if (central) {
+    Serial.print("Connected to central: ");
+    Serial.println(central.address());
+    digitalWrite(LED_BUILTIN, HIGH); // Turn on LED to indicate connection
 
-  // if (central) {
-  //   Serial.print("Connected to central: ");
-  //   Serial.println(central.address());
-  //   digitalWrite(LED_BUILTIN, HIGH); // Turn on LED to indicate connection
+    // Keep running while connected
+    while (central.connected()) {
+        
+      // Check if the characteristic was written
+      if (customCharacteristic.written()) {
+       // Get the length of the received data
+        int length = customCharacteristic.valueLength();
 
-  //   // Keep running while connected
-  //   while (central.connected()) {
-  //     // Check if the characteristic was written
-  //     if (customCharacteristic.written()) {
-  //      // Get the length of the received data
-  //       int length = customCharacteristic.valueLength();
+        // Read the received data
+        const unsigned char* receivedData = customCharacteristic.value();
 
-  //       // Read the received data
-  //       const unsigned char* receivedData = customCharacteristic.value();
+        // Create a properly terminated string
+        char receivedString[length + 1]; // +1 for null terminator
+        memcpy(receivedString, receivedData, length);
+        receivedString[length] = '\0'; // Null-terminate the string
 
-  //       // Create a properly terminated string
-  //       char receivedString[length + 1]; // +1 for null terminator
-  //       memcpy(receivedString, receivedData, length);
-  //       receivedString[length] = '\0'; // Null-terminate the string
+        // Print the received data to the Serial Monitor
+        // Serial.println(receivedString);
 
-  //       // Print the received data to the Serial Monitor
-  //       Serial.print("Received data: ");
-  //       Serial.println(receivedString);
+         if (strcmp(receivedString, "W") == 0) {
+          Serial.println("W");
+          goForward();
+          delay(3000);
+        } 
+        else if (strcmp(receivedString, "S") == 0) {
+          Serial.println("S");
+          goBackward();
+        } 
+        else if (strcmp(receivedString, "A") == 0) {
+          Serial.println("A");
+          goLeft();
+        } 
+        else if (strcmp(receivedString, "D") == 0) {
+          Serial.println("D");
+          goRight();
+        } 
+        else {
+          Serial.println("Invalid Command");
+        }
+      }
 
+        // Optionally, respond by updating the characteristic's value
+        customCharacteristic.writeValue("Data received");
+      }
+    }
 
-  //       // Optionally, respond by updating the characteristic's value
-  //       customCharacteristic.writeValue("Data received");
-  //     }
-  //   }
-
-  //   digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
-  //   Serial.println("Disconnected from central.");
-  // }
+    digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
+    Serial.println("Disconnected from central.");
 }
+
