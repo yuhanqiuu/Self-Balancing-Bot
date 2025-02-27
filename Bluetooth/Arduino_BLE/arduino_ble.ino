@@ -44,7 +44,6 @@ void loop() {
 
   BLEDevice central = BLE.central();
   
-
   if (central) {
     Serial.print("Connected to central: ");
     Serial.println(central.address());
@@ -52,6 +51,7 @@ void loop() {
 
     // Keep running while connected
     while (central.connected()) {
+        
       // Check if the characteristic was written
       if (customCharacteristic.written()) {
        // Get the length of the received data
@@ -70,8 +70,8 @@ void loop() {
 
          if (strcmp(receivedString, "W") == 0) {
           Serial.println("W");
-          // goForward();
-          forward(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
+          goForward();
+          delay(3000);
         } 
         else if (strcmp(receivedString, "S") == 0) {
           Serial.println("S");
