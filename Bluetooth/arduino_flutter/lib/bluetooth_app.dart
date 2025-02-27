@@ -208,7 +208,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     ElevatedButton(
                       onPressed:
-                          _isConnected ? () => _sendCommand('UP') : null,
+                          _isConnected ? () => _sendCommand('W') : null,
                       child: const Icon(Icons.arrow_upward),
                     ),
                   ],
@@ -219,19 +219,19 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     ElevatedButton(
                       onPressed:
-                          _isConnected ? () => _sendCommand('LEFT') : null,
+                          _isConnected ? () => _sendCommand('A') : null,
                       child: const Icon(Icons.arrow_back),
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
                       onPressed:
-                          _isConnected ? () => _sendCommand('DOWN') : null,
+                          _isConnected ? () => _sendCommand('S') : null,
                       child: const Icon(Icons.arrow_downward),
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
                       onPressed:
-                          _isConnected ? () => _sendCommand('RIGHT') : null,
+                          _isConnected ? () => _sendCommand('D') : null,
                       child: const Icon(Icons.arrow_forward),
                     ),
                   ],
