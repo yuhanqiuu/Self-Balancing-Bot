@@ -10,76 +10,35 @@
 // Libraries
 #include "Arduino_BMI270_BMM150.h"
 #include <math.h>
+#include <PID_v1.h>
+#include <movement.h>
 //-------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------
 // Global Variables
 char userInput;
 float old_theta_n = 0;
-//-------------------------------------------------------------------------
 
-//-------------------------------------------------------------------------
-// PID Controller Function
-float pid(float target, float current) {
+float Kp = 0;          // (P)roportional Tuning Parameter
+float Ki = 0;          // (I)ntegral Tuning Parameter        
+float Kd = 0;          // (D)erivative Tuning Parameter   
     
-}
+float iTerm = 0;       // Used to accumulate error (integral)
+float lastTime = 0;    // Records the time the function was last called
+float oldValue = 0;    // The last sensor value
+
+float theta_n = 0;     // current angle inputs???
+float pidOutput = 0;   // PID output
 //-------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------
-// Angle calculation function
-float getAngle(float old_angle) {
-  float k = 0.15;  // weighting factor
-  float x, y, z;
-  float theta_gn = 0;  // set the inital angle to 0. (initial condition)
-  float theta_n = 0;
-  float theta_an;
 
-  if (IMU.accelerationAvailable()) {
-    IMU.readAcceleration(x, y, z);
-    theta_an = atan(y / z) * 180 / M_PI;
-    }
+// PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT); // initialize PID controller
+PID myPID(&theta_n, &pidOutput, &Setpoint, Kp, Ki, Kd, DIRECT); // initialize PID controller
 
-    if (IMU.gyroscopeAvailable()) {
-        IMU.readGyroscope(x, y, z);
-        theta_gn += x * (1 / IMU.gyroscopeSampleRate());
-    }
-
-    theta_n = k * (old_angle + theta_gn) + (1 - k) * theta_an;
-    
-    return theta_n;
-}
-//-------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------
-// rpm to pwm functions
-float rpm_to_pwm_left(float rpm) {
-    return 7.58 * exp(7.89E-3 * rpm);  // return pwm
-}
-  
-float rpm_to_pwm_right(float rpm) {
-    return 8.33 * exp(7.55E-3 * rpm);  // return pwm
-}
-//-------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------
-// Movement functions
-void forward(int pwm1, int pwm2){
-    analogWrite(LEFT1, pwm1);   
-    digitalWrite(LEFT2, LOW);   
-    analogWrite(RIGHT1, pwm2); 
-    digitalWrite(RIGHT2, LOW); 
-}
-
-void backward(int pwm1, int pwm2) {  
-    digitalWrite(LEFT1, LOW);   
-    analogWrite(LEFT2, pwm1);   
-    digitalWrite(RIGHT1, LOW); 
-    analogWrite(RIGHT2, pwm2);  
-}
-//-------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------
 void setup() {
+
+    // IMU and serial setup
     Serial.begin(9600);
     while (!Serial);
     Serial.println("Started");
@@ -88,23 +47,36 @@ void setup() {
     Serial.println("Failed to initialize IMU!");
     while (1);
   }
+
+  // PID setup
+  Input = 0; 
+  Setpoint = 0;
+  myPID.SetMode(AUTOMATIC);
+
+  // Motor setup should be done in movement.h
 }
 //-------------------------------------------------------------------------
 
-void loop(){
-    float theta_n = getAngle(old_theta_n);
 
+void loop(){
+    theta_n = getAngle(old_theta_n); // angles 
     old_theta_n = theta_n;
+    
 
     // Map angle (0° = 0% speed, MAX_ANGLE° = 100% speed)
     float rpm_left = abs(theta_n) * 420 / 90;
     float rpm_right = abs(theta_n) * 437 / 90;
 
-    if (theta_n > 0) {
-    forward(rpm_to_pwm_left(rpm_left), rpm_to_pwm_right(rpm_right));
-    } else if (theta_n < 0) {
-    backward(rpm_to_pwm_left(rpm_left), rpm_to_pwm_right(rpm_right));
-    } else {
-    forward(0, 0);
-    }
+    myPID.Compute(); // 
+    Serial.print(theta_n);
+    Serial.print("\t");
+    Serial.println(pidOutput);
+    // if (theta_n > 0) {
+    // forward(rpm_to_pwm_left(rpm_left), rpm_to_pwm_right(rpm_right));
+    // } else if (theta_n < 0) {
+    // backward(rpm_to_pwm_left(rpm_left), rpm_to_pwm_right(rpm_right));
+    // } else {
+    // forward(0, 0);
+    // }
+
 }
