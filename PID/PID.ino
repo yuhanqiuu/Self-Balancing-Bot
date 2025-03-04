@@ -11,24 +11,25 @@
 #include "Arduino_BMI270_BMM150.h"
 #include <math.h>
 #include <PID_v1.h>
-#include <movement.h>
+#include "movement.h"
 //-------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------
 // Global Variables
 char userInput;
-float old_theta_n = 0;
+double old_theta_n = 0;
 
-float Kp = 0;          // (P)roportional Tuning Parameter
-float Ki = 0;          // (I)ntegral Tuning Parameter        
-float Kd = 0;          // (D)erivative Tuning Parameter   
+double Kp = 0;          // (P)roportional Tuning Parameter
+double Ki = 0;          // (I)ntegral Tuning Parameter        
+double Kd = 0;          // (D)erivative Tuning Parameter   
     
-float iTerm = 0;       // Used to accumulate error (integral)
-float lastTime = 0;    // Records the time the function was last called
-float oldValue = 0;    // The last sensor value
+double iTerm = 0;       // Used to accumulate error (integral)
+double lastTime = 0;    // Records the time the function was last called
+double oldValue = 0;    // The last sensor value
 
-float theta_n = 0;     // current angle inputs???
-float pidOutput = 0;   // PID output
+double theta_n = 0;     // current angle inputs???
+double pidOutput = 0;   // PID output
+double Setpoint = 0;
 //-------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------
@@ -49,7 +50,7 @@ void setup() {
   }
 
   // PID setup
-  Input = 0; 
+
   Setpoint = 0;
   myPID.SetMode(AUTOMATIC);
 
@@ -64,8 +65,8 @@ void loop(){
     
 
     // Map angle (0° = 0% speed, MAX_ANGLE° = 100% speed)
-    float rpm_left = abs(theta_n) * 420 / 90;
-    float rpm_right = abs(theta_n) * 437 / 90;
+    double rpm_left = abs(theta_n) * 420 / 90;
+    double rpm_right = abs(theta_n) * 437 / 90;
 
     myPID.Compute(); // 
     Serial.print(theta_n);
