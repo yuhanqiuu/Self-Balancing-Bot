@@ -1,6 +1,9 @@
 // pwm.cpp
 #include "movement.h"
 #include <math.h>
+#include "Arduino_BMI270_BMM150.h"
+
+//-------------------------------------------------------------------------
 
 // Convert RPM to PWM for left and right motors
 float rpm_to_pwm_left(float rpm) {
@@ -10,6 +13,8 @@ float rpm_to_pwm_left(float rpm) {
 float rpm_to_pwm_right(float rpm) {
     return 8.33 * exp(7.55E-3 * rpm); // return pwm
 }
+
+//-------------------------------------------------------------------------
 
 // Initialize motor pins
 void setupMotors() {
@@ -51,6 +56,8 @@ void rfw_lbw(int pwm1, int pwm2) {
     digitalWrite(BIN1, LOW);
 }
 
+//-------------------------------------------------------------------------
+
 void goForward() {
     forward(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
 }
@@ -66,3 +73,29 @@ void goRight() {
 void goLeft() {
     rfw_lbw(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
 }
+
+//-------------------------------------------------------------------------
+
+double getAngle(double old_theta_n)
+{
+    float k = 0.15; // weighting factor
+    float x, y, z;
+    float theta_an, theta_gn = 0;
+    float theta_n;
+    if (IMU.accelerationAvailable())
+    {
+        IMU.readAcceleration(x, y, z);
+        theta_an = atan(y / z) * 180 / M_PI; // might need to change the axis later
+    }
+
+    if (IMU.gyroscopeAvailable())
+    {
+        IMU.readGyroscope(x, y, z);
+        theta_gn += x * (1 / IMU.gyroscopeSampleRate());
+    }
+
+    theta_n = k * ((float)old_theta_n + theta_gn) + (1 - k) * theta_an;
+    return (double)theta_n;
+}
+
+//-------------------------------------------------------------------------

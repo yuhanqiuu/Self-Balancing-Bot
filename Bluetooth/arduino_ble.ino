@@ -1,4 +1,5 @@
 #include <ArduinoBLE.h>
+#include "movement.h"
 
 #define BUFFER_SIZE 20
 
@@ -10,8 +11,6 @@ BLECharacteristic customCharacteristic(
 void setup() {
   Serial.begin(9600);
   while (!Serial);
-  Serial.println("start");
-
 
   // Initialize the built-in LED to indicate connection status
   pinMode(LED_BUILTIN, OUTPUT);
@@ -42,8 +41,9 @@ void setup() {
 
 void loop() {
   // Wait for a BLE central to connect
-  BLEDevice central = BLE.central();
 
+  BLEDevice central = BLE.central();
+  
   if (central) {
     Serial.print("Connected to central: ");
     Serial.println(central.address());
@@ -51,6 +51,7 @@ void loop() {
 
     // Keep running while connected
     while (central.connected()) {
+        
       // Check if the characteristic was written
       if (customCharacteristic.written()) {
        // Get the length of the received data
@@ -65,10 +66,29 @@ void loop() {
         receivedString[length] = '\0'; // Null-terminate the string
 
         // Print the received data to the Serial Monitor
-        Serial.print("Received data: ");
+        // Serial.println(receivedString);
 
-        Serial.println(receivedString);
-
+         if (strcmp(receivedString, "W") == 0) {
+          Serial.println("W");
+          goForward();
+          delay(3000);
+        } 
+        else if (strcmp(receivedString, "S") == 0) {
+          Serial.println("S");
+          goBackward();
+        } 
+        else if (strcmp(receivedString, "A") == 0) {
+          Serial.println("A");
+          goLeft();
+        } 
+        else if (strcmp(receivedString, "D") == 0) {
+          Serial.println("D");
+          goRight();
+        } 
+        else {
+          Serial.println("Invalid Command");
+        }
+      }
 
         // Optionally, respond by updating the characteristic's value
         customCharacteristic.writeValue("Data received");
@@ -77,5 +97,5 @@ void loop() {
 
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     Serial.println("Disconnected from central.");
-  }
 }
+
