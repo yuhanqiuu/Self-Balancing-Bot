@@ -23,4 +23,6 @@ void goBackward();
 void goLeft();
 void goRight();
 
+double getAngle(double old_theta_n);
+
 #endif

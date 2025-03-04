@@ -19,9 +19,9 @@
 char userInput;
 double old_theta_n = 0;
 
-double Kp = 0;          // (P)roportional Tuning Parameter
-double Ki = 0;          // (I)ntegral Tuning Parameter        
-double Kd = 0;          // (D)erivative Tuning Parameter   
+double Kp = 0.3;          // (P)roportional Tuning Parameter
+double Ki = 20;          // (I)ntegral Tuning Parameter        
+double Kd = 3;          // (D)erivative Tuning Parameter   
     
 double iTerm = 0;       // Used to accumulate error (integral)
 double lastTime = 0;    // Records the time the function was last called
@@ -30,8 +30,6 @@ double oldValue = 0;    // The last sensor value
 double theta_n = 0;     // current angle inputs???
 double pidOutput = 0;   // PID output
 double Setpoint = 0;
-//-------------------------------------------------------------------------
-
 //-------------------------------------------------------------------------
 
 // PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT); // initialize PID controller
