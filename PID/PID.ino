@@ -19,9 +19,9 @@
 char userInput;
 double old_theta_n = 0;
 
-double Kp = 0.3;          // (P)roportional Tuning Parameter
-double Ki = 20;          // (I)ntegral Tuning Parameter        
-double Kd = 3;          // (D)erivative Tuning Parameter   
+double Kp = 20;          // (P)roportional Tuning Parameter
+double Ki = 0;          // (I)ntegral Tuning Parameter        
+double Kd = 0;          // (D)erivative Tuning Parameter   
     
 double iTerm = 0;       // Used to accumulate error (integral)
 double lastTime = 0;    // Records the time the function was last called
@@ -65,11 +65,24 @@ void loop(){
     // Map angle (0° = 0% speed, MAX_ANGLE° = 100% speed)
     double rpm_left = abs(theta_n) * 420 / 90;
     double rpm_right = abs(theta_n) * 437 / 90;
+ 
 
     myPID.Compute(); // 
     Serial.print(theta_n);
     Serial.print("\t");
     Serial.println(pidOutput);
+
+    // if leaning forward, move forward
+    if ((Setpoint - theta_n) > 0){
+      // leaning forward, go forward
+      forward(rpm_to_pwm_left(pidOutput), rpm_to_pwm_right(pidOutput));
+
+    } else if ((Setpoint - theta_n) > 0){
+      // leaning backward, go backward
+      backward(rpm_to_pwm_left(pidOutput), rpm_to_pwm_right(pidOutput));
+    }else{
+      forward(0, 0);
+    }
     // if (theta_n > 0) {
     // forward(rpm_to_pwm_left(rpm_left), rpm_to_pwm_right(rpm_right));
     // } else if (theta_n < 0) {
