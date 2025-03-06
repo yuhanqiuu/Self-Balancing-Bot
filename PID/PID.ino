@@ -19,9 +19,9 @@
 char userInput;
 double old_theta_n = 0;
 
-double Kp = 20;          // (P)roportional Tuning Parameter
+double Kp = 15;          // (P)roportional Tuning Parameter
 double Ki = 0;          // (I)ntegral Tuning Parameter        
-double Kd = 0;          // (D)erivative Tuning Parameter   
+double Kd = 7;          // (D)erivative Tuning Parameter   
     
 double iTerm = 0;       // Used to accumulate error (integral)
 double lastTime = 0;    // Records the time the function was last called
@@ -74,13 +74,13 @@ void loop(){
     Serial.println(pidOutput);
 
     // if leaning forward, move forward
-    if ((Setpoint - theta_n) > 0){
+    if (pidOutput> 0){
       // leaning forward, go forward
-      forward(abs(pidOutput), abs(pidOutput));
-
-    } else if ((Setpoint - theta_n) > 0){
-      // leaning backward, go backward
       backward(abs(pidOutput), abs(pidOutput));
+
+    } else if (pidOutput < 0){
+      // leaning backward, go backward
+      forward(abs(pidOutput), abs(pidOutput));
     }else{
       forward(0, 0);
     }
