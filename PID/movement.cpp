@@ -57,7 +57,7 @@ void rfw_lbw(int pwm1, int pwm2) {
 }
 
 //-------------------------------------------------------------------------
-
+// full rpm. 
 void goForward() {
     forward(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
 }

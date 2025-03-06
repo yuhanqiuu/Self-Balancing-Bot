@@ -51,6 +51,7 @@ void setup() {
 
   Setpoint = 0;
   myPID.SetMode(AUTOMATIC);
+  myPID.SetOutputLimits(-255, 255);
 
   // Motor setup should be done in movement.h
 }
@@ -75,11 +76,11 @@ void loop(){
     // if leaning forward, move forward
     if ((Setpoint - theta_n) > 0){
       // leaning forward, go forward
-      forward(rpm_to_pwm_left(pidOutput), rpm_to_pwm_right(pidOutput));
+      forward(abs(pidOutput), abs(pidOutput));
 
     } else if ((Setpoint - theta_n) > 0){
       // leaning backward, go backward
-      backward(rpm_to_pwm_left(pidOutput), rpm_to_pwm_right(pidOutput));
+      backward(abs(pidOutput), abs(pidOutput));
     }else{
       forward(0, 0);
     }
