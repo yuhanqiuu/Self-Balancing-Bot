@@ -48,14 +48,56 @@ void lfw_rbw(int pwm1, int pwm2) {
     digitalWrite(BIN1, LOW);
 }
 
-// Right forward, left backward
-void rfw_lbw(int pwm1, int pwm2) { 
+//right foward, left backward
+void rfw_lbw(int pwm1, int pwm2){ 
     analogWrite(AIN2, pwm1); 
     digitalWrite(AIN1, LOW);
-    analogWrite(BIN2, pwm2);
-    digitalWrite(BIN1, LOW);
-}
+  
+    analogWrite(BIN1, pwm2);
+    digitalWrite(BIN2, LOW);
+  }
 
+  // slow decay
+void forward_slow(int pwm1, int pwm2){
+    analogWrite(AIN2, pwm1);   
+    digitalWrite(AIN1, HIGH); 
+  
+    analogWrite(BIN2, pwm2); 
+    digitalWrite(BIN1, HIGH); 
+  }
+  
+  // reverse slow decay
+  void backward_slow(int pwm1, int pwm2) {  
+      digitalWrite(AIN2, HIGH);   
+      analogWrite(AIN1, pwm1);
+  
+      digitalWrite(BIN2, HIGH); 
+      analogWrite(BIN1, pwm2);  
+  }
+  
+  //left forward, right backward
+  // A left, B right
+  void lfw_rbw_slow(int pwm1, int pwm2){ 
+  
+    // Right motor forward
+    analogWrite(AIN2, pwm1);  
+    digitalWrite(AIN1, HIGH);
+    
+    analogWrite(BIN1, pwm2);
+    digitalWrite(BIN2, HIGH);
+  
+   
+  }
+  
+  //right foward, left backward
+  void rfw_lbw_slow(int pwm1, int pwm2){ 
+    analogWrite(AIN1, pwm1); 
+    digitalWrite(AIN2, HIGH);
+  
+    analogWrite(BIN2, pwm2);
+    digitalWrite(BIN1, HIGH);
+  }
+  
 //-------------------------------------------------------------------------
 // full rpm. 
 void goForward() {

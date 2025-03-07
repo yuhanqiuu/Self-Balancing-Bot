@@ -18,6 +18,12 @@ void backward(int pwm1, int pwm2);
 void lfw_rbw(int pwm1, int pwm2);
 void rfw_lbw(int pwm1, int pwm2);
 
+void forward_slow(int pwm1, int pwm2);
+void backward_slow(int pwm1, int pwm2);
+void lfw_rbw_slow(int pwm1, int pwm2);
+void rfw_lbw_slow(int pwm1, int pwm2);
+
+
 void goForward();
 void goBackward();
 void goLeft();

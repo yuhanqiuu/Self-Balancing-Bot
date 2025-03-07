@@ -19,9 +19,9 @@
 char userInput;
 double old_theta_n = 0;
 
-double Kp = 15;          // (P)roportional Tuning Parameter
-double Ki = 0;          // (I)ntegral Tuning Parameter        
-double Kd = 7;          // (D)erivative Tuning Parameter   
+double Kp = 15;          // (P)roportional Tuning Parameter 15
+double Ki = 0.1;          // (I)ntegral Tuning Parameter        
+double Kd = 5;          // (D)erivative Tuning Parameter   
     
 double iTerm = 0;       // Used to accumulate error (integral)
 double lastTime = 0;    // Records the time the function was last called
@@ -76,13 +76,13 @@ void loop(){
     // if leaning forward, move forward
     if (pidOutput> 0){
       // leaning forward, go forward
-      backward(abs(pidOutput), abs(pidOutput));
+      forward_slow(abs(pidOutput)/255*420, abs(pidOutput)/255*437);
 
     } else if (pidOutput < 0){
       // leaning backward, go backward
-      forward(abs(pidOutput), abs(pidOutput));
+      backward_slow(abs(pidOutput)/255*420, abs(pidOutput)/255*437);
     }else{
-      forward(0, 0);
+      forward_slow(0, 0);
     }
     // if (theta_n > 0) {
     // forward(rpm_to_pwm_left(rpm_left), rpm_to_pwm_right(rpm_right));
