@@ -122,7 +122,7 @@ void loop() {
   // delay(3000); // wait for 5 sec
 
 
-  rfw_lbw_slow(rpm_to_pwm_left(420/4), rpm_to_pwm_right(437));
+  rfw_lbw_slow(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
   delay(3000); // wait for 5 sec
 
   // forward(rpm_to_pwm_left(420 * 3 / 4), rpm_to_pwm_right(437 * 3 / 4));

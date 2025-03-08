@@ -19,9 +19,9 @@
 char userInput;
 double old_theta_n = 0;
 
-double Kp = 15;          // (P)roportional Tuning Parameter 15
-double Ki = 0.1;          // (I)ntegral Tuning Parameter        
-double Kd = 5;          // (D)erivative Tuning Parameter   
+double Kp = 5;          // (P)roportional Tuning Parameter 
+double Ki = 0;          // (I)ntegral Tuning Parameter        
+double Kd = 0;          // (D)erivative Tuning Parameter   
     
 double iTerm = 0;       // Used to accumulate error (integral)
 double lastTime = 0;    // Records the time the function was last called
@@ -69,21 +69,33 @@ void loop(){
  
 
     myPID.Compute(); // 
-    Serial.print(theta_n);
-    Serial.print("\t");
-    Serial.println(pidOutput);
+  
 
     // if leaning forward, move forward
     if (pidOutput> 0){
       // leaning forward, go forward
-      forward_slow(abs(pidOutput)/255*420, abs(pidOutput)/255*437);
+
+      // FOR SOME REASON ITS BACKWARDS FOR THE SLOW DECAY?? IDK WHYYY, MIGHT NEED TO DEBUG?
+      backward_slow(abs(pidOutput)/255*420, abs(pidOutput)/255*437);
+
+      // ***************TEST OUT THE FOLLOWING LINE AS WELL***************************************************
+      // backward_slow(rpm_to_pwm_left((pidOutput)/255*420), rpm_to_pwm_right((pidOutput)/255*437));
+
 
     } else if (pidOutput < 0){
       // leaning backward, go backward
-      backward_slow(abs(pidOutput)/255*420, abs(pidOutput)/255*437);
+      forward_slow(abs(pidOutput)/255*420, abs(pidOutput)/255*437);
+      // forward_slow(rpm_to_pwm_left((pidOutput)/255*420), rpm_to_pwm_right((pidOutput)/255*437));
+
     }else{
       forward_slow(0, 0);
     }
+
+    Serial.print(theta_n);
+    Serial.print("\t");
+    Serial.println(pidOutput);
+
+
     // if (theta_n > 0) {
     // forward(rpm_to_pwm_left(rpm_left), rpm_to_pwm_right(rpm_right));
     // } else if (theta_n < 0) {
