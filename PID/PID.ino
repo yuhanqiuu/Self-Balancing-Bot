@@ -19,7 +19,7 @@
 char userInput;
 double old_theta_n = 0;
 
-double Kp = 5;          // (P)roportional Tuning Parameter 
+double Kp = 10;          // (P)roportional Tuning Parameter 
 double Ki = 0;          // (I)ntegral Tuning Parameter        
 double Kd = 0;          // (D)erivative Tuning Parameter   
     
@@ -63,12 +63,12 @@ void loop(){
     old_theta_n = theta_n;
     
 
-    // Map angle (0° = 0% speed, MAX_ANGLE° = 100% speed)
-    double rpm_left = abs(theta_n) * 420 / 90;
-    double rpm_right = abs(theta_n) * 437 / 90;
+    // // Map angle (0° = 0% speed, MAX_ANGLE° = 100% speed)
+    // double rpm_left = abs(theta_n) * 420 / 90;
+    // double rpm_right = abs(theta_n) * 437 / 90;
  
 
-    myPID.Compute(); // 
+    myPID.Compute(); // Compute new PID output
   
 
     // if leaning forward, move forward
@@ -76,32 +76,21 @@ void loop(){
       // leaning forward, go forward
 
       // FOR SOME REASON ITS BACKWARDS FOR THE SLOW DECAY?? IDK WHYYY, MIGHT NEED TO DEBUG?
-      backward_slow(abs(pidOutput)/255*420, abs(pidOutput)/255*437);
+      // backward_slow(abs(pidOutput)/255*420, abs(pidOutput)/255*437);
 
       // ***************TEST OUT THE FOLLOWING LINE AS WELL***************************************************
-      // backward_slow(rpm_to_pwm_left((pidOutput)/255*420), rpm_to_pwm_right((pidOutput)/255*437));
+      backward_slow(rpm_to_pwm_left(abs(pidOutput)/255*420), rpm_to_pwm_right(abs(pidOutput)/255*437));
+      // backward_slow(pidOutput, pidOutput);
 
-
-    } else if (pidOutput < 0){
+    } else {
       // leaning backward, go backward
-      forward_slow(abs(pidOutput)/255*420, abs(pidOutput)/255*437);
-      // forward_slow(rpm_to_pwm_left((pidOutput)/255*420), rpm_to_pwm_right((pidOutput)/255*437));
-
-    }else{
-      forward_slow(0, 0);
+      // forward_slow(abs(pidOutput)/255*420, abs(pidOutput)/255*437);
+      forward_slow(rpm_to_pwm_left(abs(pidOutput)/255*420), rpm_to_pwm_right(abs(pidOutput)/255*437));
+      // forward_slow(pidOutput, pidOutput);
     }
 
     Serial.print(theta_n);
     Serial.print("\t");
     Serial.println(pidOutput);
-
-
-    // if (theta_n > 0) {
-    // forward(rpm_to_pwm_left(rpm_left), rpm_to_pwm_right(rpm_right));
-    // } else if (theta_n < 0) {
-    // backward(rpm_to_pwm_left(rpm_left), rpm_to_pwm_right(rpm_right));
-    // } else {
-    // forward(0, 0);
-    // }
 
 }
