@@ -7,11 +7,13 @@
 
 #define MAX_PWM 255
 //-------------------------------------------------------------------------
+
 // Libraries
 #include "Arduino_BMI270_BMM150.h"
 #include <math.h>
 #include <PID_v1.h>
 #include "movement.h"
+
 //-------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------
@@ -31,9 +33,33 @@ double theta_n = 0;     // current angle inputs???
 double pidOutput = 0;   // PID output
 double Setpoint = 0;
 //-------------------------------------------------------------------------
+double maxPID = 255; 
 
-// PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT); // initialize PID controller
-PID myPID(&theta_n, &pidOutput, &Setpoint, Kp, Ki, Kd, DIRECT); // initialize PID controller
+// PID myPID(&theta_n, &pidOutput, &Setpoint, Kp, Ki, Kd, DIRECT); // initialize PID controller
+
+int PID(double target, double current){
+  int output;
+  double kp, ki, kd, error, last_error, iTerm;
+  float thisTime = millis();
+	float dT = thisTime - lastTime;
+	lastTime = thisTime;
+
+  error = target - current;
+
+	iTerm += error * dT; 
+
+  double dTerm = (oldValue - current) / dT;
+  oldValue = current;
+
+	// Multiply each term by its constant, and add it all up
+	double result = (error * Kp) + (iTerm * Ki) + (dTerm * Kd);
+
+	// Limit PID value to maximum values
+	if (result > maxPID) result = maxPID;
+	else if (result < -maxPID) result = -maxPID;
+
+	return result
+} 
 
 void setup() {
 
@@ -49,9 +75,9 @@ void setup() {
 
   // PID setup
 
-  Setpoint = 0;
-  myPID.SetMode(AUTOMATIC);
-  myPID.SetOutputLimits(-255, 255);
+  target = 0;
+ 
+  last_time = millis();
 
   // Motor setup should be done in movement.h
 }
@@ -62,57 +88,14 @@ void loop(){
     theta_n = getAngle(old_theta_n); // angles 
     old_theta_n = theta_n;
     
+    // Run the PID controller
+      double motorOutput = pid(targetValue, currentValue);
 
-    // // Map angle (0° = 0% speed, MAX_ANGLE° = 100% speed)
-    // double rpm_left = abs(theta_n) * 420 / 90;
-    // double rpm_right = abs(theta_n) * 437 / 90;
- 
-
-    myPID.Compute(); // Compute new PID output
-  
-
-    // if leaning forward, move forward
-    if (pidOutput> 0){
-      // leaning forward, go forward
-
-      // FOR SOME REASON ITS BACKWARDS FOR THE SLOW DECAY?? IDK WHYYY, MIGHT NEED TO DEBUG?
-      // backward_slow(abs(pidOutput)/255*420, abs(pidOutput)/255*437);
-
-      // ***************TEST OUT THE FOLLOWING LINE AS WELL***************************************************
-      //backward_slow(rpm_to_pwm_left(abs(pidOutput)/255*420), rpm_to_pwm_right(abs(pidOutput)/255*437));
-      //backward_slow(abs(pidOutput), abs(pidOutput));
-
-      forward(abs(pidOutput), abs(pidOutput));
-
-    } else {
-      // leaning backward, go backward
-      // forward_slow(abs(pidOutput)/255*420, abs(pidOutput)/255*437);
-      //forward_slow(rpm_to_pwm_left(abs(pidOutput)/255*420), rpm_to_pwm_right(abs(pidOutput)/255*437));
-      //forward_slow(abs(pidOutput), abs(pidOutput));
-
-      backward(abs(pidOutput), abs(pidOutput));
+    if(motorOutput > 0){
+        forward(abs(motorOutput), abs(motorOutput));
+    } else if (motorOutput < 0){
+      backward(abs(motorOutput), abs(motorOutput));
     }
-
-    // another calibration code
-    int targetRPM_L = map(abs(pidOutput), 0, 255, 0, 420);
-    int targetRPM_R = map(abs(pidOutput), 0, 255, 0, 437);
-    int motorPWM_L = rpm_to_pwm_left(targetRPM_L);
-    int motorPWM_R = rpm_to_pwm_right(targetRPM_R);
-
-    int totalOutput_L = pidOutput + motorPWM_L;
-    int totalOutput_R = pidOutput + motorPWM_R;
-
-    totalOutput_L = constrain(totalOutput_L, 30, 255); // Enforce min PWM threshold
-    totalOutput_R = constrain(totalOutput_R, 30, 255);
-
-    if (pidOutput > 0) {
-        forward(totalOutput_L, totalOutput_R);
-    } else {
-        backward(totalOutput_L, totalOutput_R);
-    }
-
-    Serial.print(theta_n);
-    Serial.print("\t");
-    Serial.println(pidOutput);
-
+      else {forward(0, 0);}
+    
 }
