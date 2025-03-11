@@ -19,7 +19,7 @@
 char userInput;
 double old_theta_n = 0;
 
-double Kp = 10;          // (P)roportional Tuning Parameter 
+double Kp = 4.25;          // (P)roportional Tuning Parameter 
 double Ki = 0;          // (I)ntegral Tuning Parameter        
 double Kd = 0;          // (D)erivative Tuning Parameter   
     
@@ -79,14 +79,36 @@ void loop(){
       // backward_slow(abs(pidOutput)/255*420, abs(pidOutput)/255*437);
 
       // ***************TEST OUT THE FOLLOWING LINE AS WELL***************************************************
-      backward_slow(rpm_to_pwm_left(abs(pidOutput)/255*420), rpm_to_pwm_right(abs(pidOutput)/255*437));
-      // backward_slow(pidOutput, pidOutput);
+      //backward_slow(rpm_to_pwm_left(abs(pidOutput)/255*420), rpm_to_pwm_right(abs(pidOutput)/255*437));
+      //backward_slow(abs(pidOutput), abs(pidOutput));
+
+      forward(abs(pidOutput), abs(pidOutput));
 
     } else {
       // leaning backward, go backward
       // forward_slow(abs(pidOutput)/255*420, abs(pidOutput)/255*437);
-      forward_slow(rpm_to_pwm_left(abs(pidOutput)/255*420), rpm_to_pwm_right(abs(pidOutput)/255*437));
-      // forward_slow(pidOutput, pidOutput);
+      //forward_slow(rpm_to_pwm_left(abs(pidOutput)/255*420), rpm_to_pwm_right(abs(pidOutput)/255*437));
+      //forward_slow(abs(pidOutput), abs(pidOutput));
+
+      backward(abs(pidOutput), abs(pidOutput));
+    }
+
+    // another calibration code
+    int targetRPM_L = map(abs(pidOutput), 0, 255, 0, 420);
+    int targetRPM_R = map(abs(pidOutput), 0, 255, 0, 437);
+    int motorPWM_L = rpm_to_pwm_left(targetRPM_L);
+    int motorPWM_R = rpm_to_pwm_right(targetRPM_R);
+
+    int totalOutput_L = pidOutput + motorPWM_L;
+    int totalOutput_R = pidOutput + motorPWM_R;
+
+    totalOutput_L = constrain(totalOutput_L, 30, 255); // Enforce min PWM threshold
+    totalOutput_R = constrain(totalOutput_R, 30, 255);
+
+    if (pidOutput > 0) {
+        forward(totalOutput_L, totalOutput_R);
+    } else {
+        backward(totalOutput_L, totalOutput_R);
     }
 
     Serial.print(theta_n);
