@@ -120,7 +120,7 @@ void goLeft() {
 
 double getAngle(double old_theta_n)
 {
-    float k = 0.15; // weighting factor
+    float k = 0.9; // weighting factor
     float x, y, z;
     float theta_an, theta_gn = 0;
     float theta_n;
