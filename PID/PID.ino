@@ -20,9 +20,9 @@ float old_theta_n = 0;
 String input;
 int task = 0;
 
-float Kp = 13;          // (P)roportional Tuning Parameter 12-14?
-float Ki = 60;          // (I)ntegral Tuning Parameter        
-float Kd = 5;          // (D)erivative Tuning Parameter   1049
+float Kp = 30;          // (P)roportional Tuning Parameter 12-14?
+float Ki = 0;          // (I)ntegral Tuning Parameter        
+float Kd = 0.2;          // (D)erivative Tuning Parameter   1049
 float K_mast = 1.0;
     
 // PID Variables
@@ -55,7 +55,7 @@ float PID(float setpoint, float currentValue){
   //   currentTime = micros();
   //   dt = (currentTime - lastTime) / 1000000.0;  // Time difference in seconds
   // lastTime = currentTime;
-  dt = (float) (micros() - currentTime) / 1000000;  // gets time for ∆t
+  dt = (float) (micros() - currentTime) / 1000000.0;  // gets time for ∆t
   currentTime = micros();  // sets new current time
 
   float error = setpoint - currentValue;
@@ -63,7 +63,7 @@ float PID(float setpoint, float currentValue){
   proportional = Kp * error;
 
   integral += Ki * dt * (error + previousError) / 2.0;
-  integral = constrain(integral, -100, 100);  // Example limit
+  integral = constrain(integral, -30, 30);  // Example limit
 
 
   // Derivative term (rate of change of error)
@@ -142,8 +142,8 @@ void setup() {
 
 void loop(){
 
-  // if (millis() - timerValue > LOOP_TIME) {
-	// 	timerValue = millis();
+  if (micros() - timerValue > LOOP_TIME) {
+	timerValue = micros();
 
     keyboard_test();
 
@@ -155,17 +155,17 @@ void loop(){
     
     // Run the PID controller
       float result = PID(0, theta_n); // targe value = 0, current value = theta_n, pid output
-      float motorOutput = constrain(map(abs(result),0,500,35,255),35,255); // pwm output
+      float motorOutput = constrain(map(abs(result),0,500,10,255),10,255); // pwm output
       // result = constrain(result, -500, 500);
       // float motorOutput = map(result, -500, 500, 0, 255);
 
       leftpwm = (int) abs(motorOutput*0.9);
-      rightpwm =abs(motorOutput);
+      rightpwm = (int) abs(motorOutput);
 
-    if(result > 0){
+    if(result > 0.1){
       forward_slow(leftpwm, rightpwm);
 
-    } else if (result < 0){
+    } else if (result < -0.1){
       backward_slow(leftpwm,rightpwm);
 
     }
@@ -196,5 +196,5 @@ void loop(){
       Serial.print("\t");
       Serial.println(motorOutput);
 
-  // }
+   }
 }
