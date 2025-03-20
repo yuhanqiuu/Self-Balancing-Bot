@@ -20,22 +20,26 @@ float old_theta_n = 0;
 String input;
 int task = 0;
 
-float Kp = 7;          // (P)roportional Tuning Parameter 12-14?
-float Ki = 0;          // (I)ntegral Tuning Parameter        
-float Kd = 1;          // (D)erivative Tuning Parameter   1049
+float Kp = 13;          // (P)roportional Tuning Parameter 12-14?
+float Ki = 60;          // (I)ntegral Tuning Parameter        
+float Kd = 5;          // (D)erivative Tuning Parameter   1049
+float K_mast = 1.0;
     
-float iTerm = 0;       // Used to accumulate error (integral)
-float lastTime = 0;    // Records the time the function was last called
-float last_error = 0;    // The last sensor value
-float dTerm = 0;    
-float dT = 0;   
+// PID Variables
+float previousError = 0;
+float integral = 0;
+float proportional = 0;
+float derivative = 0;
+unsigned long lastTime = 0;
+float dt = 0;
+float currentTime = 0;
 
 
 float theta_n = 0;     // current angle inputs???
 float pidOutput = 0;   // PID output
-float target = 0;
+float setpoint = 0;
 //-------------------------------------------------------------------------
-float maxPID = 255; 
+float maxPID = 1000; 
 
 // for gyroscope
 float x, y, z;
@@ -46,33 +50,42 @@ unsigned long timerValue = 0;
 
 // PID myPID(&theta_n, &pidOutput, &Setpoint, Kp, Ki, Kd, DIRECT); // initialize PID controller
 
-int PID(float target, float current){
-  float thisTime = millis();
-	dT = (thisTime - lastTime)/1000;
-	lastTime = thisTime;
+float PID(float setpoint, float currentValue){
+  float output = 0;
+  //   currentTime = micros();
+  //   dt = (currentTime - lastTime) / 1000000.0;  // Time difference in seconds
+  // lastTime = currentTime;
+  dt = (float) (micros() - currentTime) / 1000000;  // gets time for ∆t
+  currentTime = micros();  // sets new current time
 
-  float error = target - current;
+  float error = setpoint - currentValue;
 
-	iTerm += error * dT; 
+  proportional = Kp * error;
 
-  dTerm = (error  - last_error) / dT;
-  last_error = error;
-  if(dTerm < 0.5 && dTerm > -0.5){
-    dTerm = 0;
-  }
+  integral += Ki * dt * (error + previousError) / 2.0;
+  integral = constrain(integral, -100, 100);  // Example limit
 
-	// Multiply each term by its constant, and add it all up
-	float result = (error * Kp) + (iTerm * Ki) + (dTerm * Kd);
 
-  // using gyroscope data directly for Kd term
-  // float result = (error * Kp) + (iTerm * Ki) + (x * Kd);
+  // Derivative term (rate of change of error)
+  derivative = (error - previousError) / dt;
+  if (theta_n - old_theta_n > 0.1 || theta_n - old_theta_n < -0.1) 
+        derivative = -Kd * (theta_n - old_theta_n)/dt; // computes the derivative error
+    else{ 
+        derivative = 0; // filters out noise
+    }
+    
+    output = K_mast * ( proportional + integral + derivative );    // computes sum of error
+    // output = constrain(output, -1000, 1000);  // limits output of PID to limits of PWM
+    
+    previousError = error; // update the previous error
 
-  
-	// Limit PID value to maximum values
-	if (result > maxPID) result = maxPID;
-	else if (result < -maxPID) result = -maxPID;
+    if(output>500){
+      output = 500;
+    } else if(output <-500){
+      output = -500;
+    }
 
-	return result;
+  return output;
 } 
 
 void keyboard_test (void) {
@@ -91,9 +104,9 @@ void keyboard_test (void) {
   else if (input == "kd") {
       task = 3;
   }
-  // else if (input == "reset") {
-  //   // integral = 0;
-  // }
+  else if (input == "reset") {
+    integral = 0;
+  }
 
 
   switch (task) {
@@ -121,7 +134,6 @@ void setup() {
       while (1);
     }
  
-  timerValue = millis();
   Serial.setTimeout(10);
   // Motor setup should be done in movement.h
 }
@@ -137,41 +149,52 @@ void loop(){
 
     theta_n = getAngle(old_theta_n); // angles 
     old_theta_n = theta_n;
+    int leftpwm;
+    int rightpwm;
 
-    // if (IMU.gyroscopeAvailable())
-    // {
-    //     IMU.readGyroscope(x, y, z);
-    // }
     
     // Run the PID controller
-      float motorOutput = PID(0, theta_n); // targe value = 0, current value = theta_n
+      float result = PID(0, theta_n); // targe value = 0, current value = theta_n, pid output
+      float motorOutput = constrain(map(abs(result),0,500,35,255),35,255); // pwm output
+      // result = constrain(result, -500, 500);
+      // float motorOutput = map(result, -500, 500, 0, 255);
+
+      leftpwm = (int) abs(motorOutput*0.9);
+      rightpwm =abs(motorOutput);
+
+    if(result > 0){
+      forward_slow(leftpwm, rightpwm);
+
+    } else if (result < 0){
+      backward_slow(leftpwm,rightpwm);
+
+    }
+      else forward_slow(255, 255);
+
 
       Serial.print(theta_n);
       Serial.print("\t");
-      Serial.print(dTerm);
+      Serial.print(leftpwm);
       Serial.print("\t");
-      Serial.print(dT,5);
+      Serial.print(rightpwm);
       Serial.print("\t");
+      // Serial.print(proportional);
+      // Serial.print("\t");
+      // Serial.print(derivative);
+      // Serial.print("\t");
+      Serial.print(integral);
+      Serial.print("\t");
+      // Serial.print(dt,5);
+      // Serial.print("\t");
       Serial.print(Kp);
       Serial.print("\t");
       Serial.print(Ki);
       Serial.print("\t");
       Serial.print(Kd);
       Serial.print("\t");
+      Serial.print(result);
+      Serial.print("\t");
       Serial.println(motorOutput);
 
-    if(motorOutput > 0){
-      backward_slow(abs(motorOutput), abs(motorOutput));
-      //foward(abs(motorOutput), abs(motorOutput));
-
-
-      //forward(rpm_to_pwm_left(abs(motorOutput)/255*420), rpm_to_pwm_right(abs(motorOutput)/255*437));
-    } else if (motorOutput < 0){
-      // backward(abs(motorOutput), abs(motorOutput));
-      forward_slow(abs(motorOutput), abs(motorOutput));
-      //backward(rpm_to_pwm_left(abs(motorOutput)/255*420), rpm_to_pwm_right(abs(motorOutput)/255*437));
-
-    }
-      else forward(0, 0);
   // }
 }
