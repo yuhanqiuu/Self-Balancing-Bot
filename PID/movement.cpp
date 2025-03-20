@@ -58,7 +58,7 @@ void rfw_lbw(int pwm1, int pwm2){
   }
 
   // slow decay
-void forward_slow(int pwm1, int pwm2){
+void backward_slow(int pwm1, int pwm2){
     analogWrite(AIN2, pwm1);   
     digitalWrite(AIN1, HIGH); 
   
@@ -66,8 +66,7 @@ void forward_slow(int pwm1, int pwm2){
     digitalWrite(BIN1, HIGH); 
   }
   
-  // reverse slow decay
-  void backward_slow(int pwm1, int pwm2) {  
+  void forward_slow(int pwm1, int pwm2) {  
       digitalWrite(AIN2, HIGH);   
       analogWrite(AIN1, pwm1);
   

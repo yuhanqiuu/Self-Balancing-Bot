@@ -43,20 +43,22 @@ float rpm_to_pwm_right(float rpm) {
   return 8.33 * exp(7.55E-3 * rpm);  // return pwm
 }
 
-void forward(int pwm1, int pwm2){
-  analogWrite(LEFT1, pwm1);   
-  digitalWrite(LEFT2, LOW);   
-  analogWrite(RIGHT1, pwm2); 
-  digitalWrite(RIGHT2, LOW); 
+// Forward fast decay
+void forward(int pwm1, int pwm2) {
+    analogWrite(AIN1, pwm1);   
+    digitalWrite(AIN2, LOW);   
+    analogWrite(BIN1, pwm2); 
+    digitalWrite(BIN2, LOW); 
 }
 
-// reverse fast decay
+// Reverse fast decay
 void backward(int pwm1, int pwm2) {  
-  digitalWrite(LEFT1, LOW);   
-  analogWrite(LEFT2, pwm1);   
-  digitalWrite(RIGHT1, LOW); 
-  analogWrite(RIGHT2, pwm2);  
+    digitalWrite(AIN1, LOW);   
+    analogWrite(AIN2, pwm1);   
+    digitalWrite(BIN1, LOW); 
+    analogWrite(BIN2, pwm2);  
 }
+
 
 void loop() {
   // put your main code here, to run repeatedly:
