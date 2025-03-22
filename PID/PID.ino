@@ -22,7 +22,7 @@ int task = 0;
 
 float Kp = 30;          // (P)roportional Tuning Parameter 12-14?
 float Ki = 0;          // (I)ntegral Tuning Parameter        
-float Kd = 0.2;          // (D)erivative Tuning Parameter   1049
+float Kd = 0;          // (D)erivative Tuning Parameter   1049
 float K_mast = 1.0;
     
 // PID Variables
@@ -45,7 +45,7 @@ float maxPID = 1000;
 float x, y, z;
 
 // Variables for Time Keeper function:
-#define LOOP_TIME 10          // Time in ms (10ms = 100Hz)
+#define LOOP_TIME 5          // Time in ms (10ms = 100Hz)
 unsigned long timerValue = 0;
 
 // PID myPID(&theta_n, &pidOutput, &Setpoint, Kp, Ki, Kd, DIRECT); // initialize PID controller
@@ -79,10 +79,10 @@ float PID(float setpoint, float currentValue){
     
     previousError = error; // update the previous error
 
-    if(output>500){
-      output = 500;
-    } else if(output <-500){
-      output = -500;
+    if(output>255){
+      output = 255;
+    } else if(output <-255){
+      output = -255;
     }
 
   return output;
@@ -155,21 +155,25 @@ void loop(){
     
     // Run the PID controller
       float result = PID(0, theta_n); // targe value = 0, current value = theta_n, pid output
-      float motorOutput = constrain(map(abs(result),0,500,10,255),10,255); // pwm output
+      // float motorOutput = constrain(map(abs(result),0,1000,50,255),50,255); // pwm output
       // result = constrain(result, -500, 500);
-      // float motorOutput = map(result, -500, 500, 0, 255);
+      // float motorOutput = map(result, -1000, 1000, -255, 255);
 
-      leftpwm = (int) abs(motorOutput*0.9);
-      rightpwm = (int) abs(motorOutput);
+      // leftpwm = (int) abs(motorOutput*0.9);
+      // rightpwm = (int) abs(motorOutput);
+      leftpwm = (int) abs(result);
+      rightpwm = (int) abs(result);
 
-    if(result > 0.1){
+    if(result > 5){
       forward_slow(leftpwm, rightpwm);
+      // forward(leftpwm,rightpwm);
 
-    } else if (result < -0.1){
+    } else if (result < -5){
       backward_slow(leftpwm,rightpwm);
+      // backward(leftpwm,rightpwm);
 
     }
-      else forward_slow(255, 255);
+      else forward_slow(0, 0);
 
 
       Serial.print(theta_n);
@@ -192,9 +196,9 @@ void loop(){
       Serial.print("\t");
       Serial.print(Kd);
       Serial.print("\t");
-      Serial.print(result);
-      Serial.print("\t");
-      Serial.println(motorOutput);
+      Serial.println(result);
+      // Serial.print("\t");
+      // Serial.println(motorOutput);
 
    }
 }
