@@ -60,30 +60,33 @@ float PID(float setpoint, float currentValue){
 
   float error = setpoint - currentValue;
 
+  if (dt <= 0) dt = 1e-3; // Prevent division by zero
+
   proportional = Kp * error;
 
-  integral += Ki * dt * (error + previousError) / 2.0;
+  integral += dt * error;
   integral = constrain(integral, -30, 30);  // Example limit
 
 
   // Derivative term (rate of change of error)
   derivative = (error - previousError) / dt;
-  if (theta_n - old_theta_n > 0.1 || theta_n - old_theta_n < -0.1) 
-        derivative = -Kd * (theta_n - old_theta_n)/dt; // computes the derivative error
-    else{ 
-        derivative = 0; // filters out noise
-    }
+  // if (theta_n - old_theta_n > 0.1 || theta_n - old_theta_n < -0.1) 
+  //       derivative = -Kd * (theta_n - old_theta_n)/dt; // computes the derivative error
+  //   else{ 
+  //       derivative = 0; // filters out noise
+  //   }
     
-    output = K_mast * ( proportional + integral + derivative );    // computes sum of error
+    // output = K_mast * (proportional + Ki * integral + Kd * derivative );    // computes sum of error
     // output = constrain(output, -1000, 1000);  // limits output of PID to limits of PWM
+    output = constrain(proportional + Ki * integral + Kd * derivative, -250.00, 250.0);
     
     previousError = error; // update the previous error
 
-    if(output>255){
-      output = 255;
-    } else if(output <-255){
-      output = -255;
-    }
+    // if(output>255){
+    //   output = 255;
+    // } else if(output <-255){
+    //   output = -255;
+    // }
 
   return output;
 } 
