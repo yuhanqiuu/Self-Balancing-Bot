@@ -3,6 +3,8 @@
 #include <math.h>
 #include "Arduino_BMI270_BMM150.h"
 
+// float theta_n = 0;
+unsigned long ct = 0;
 //-------------------------------------------------------------------------
 
 // Convert RPM to PWM for left and right motors
@@ -117,26 +119,47 @@ void goLeft() {
 
 //-------------------------------------------------------------------------
 
-double getAngle(double old_theta_n)
+float getAngle(float theta_n)
 {
-    float k = 0.2; // weighting factor
+    float k = 0.95; // weighting factor
     float x, y, z;
     float theta_an, theta_gn = 0;
-    float theta_n;
-    if (IMU.accelerationAvailable())
-    {
-        IMU.readAcceleration(x, y, z);
-        theta_an = atan(y / z) * 180 / M_PI; // might need to change the axis later
-    }
 
-    if (IMU.gyroscopeAvailable())
-    {
+
+    float dt = (float) (micros() - ct) / 1000000;  // gets time for ∆t
+    ct = micros();  // sets new current time
+    
+    // if (IMU.accelerationAvailable())
+    // {
+    //     IMU.readAcceleration(x, y, z);
+    //     theta_an = atan(y / z) * 180 / M_PI; // might need to change the axis later
+    // }
+
+    // if (IMU.gyroscopeAvailable())
+    // {
+    //     IMU.readGyroscope(x, y, z);
+    //     theta_gn += x * (1 / IMU.gyroscopeSampleRate());
+    // }
+
+    if (IMU.gyroscopeAvailable()) {
+        // reads gyroscope value
         IMU.readGyroscope(x, y, z);
-        theta_gn += x * (1 / IMU.gyroscopeSampleRate());
+        
+        // computes theta using integration
+        theta_gn = (theta_n + x * dt);
+        
     }
 
-    theta_n = k * ((float)old_theta_n + theta_gn) + (1 - k) * theta_an;
-    return (double)theta_n;
+    if (IMU.accelerationAvailable()) {
+        // reads acceleration
+        IMU.readAcceleration(x, y, z);
+        
+        // computes theta values
+        theta_an = -degrees(atan(y / z)); 
+    }
+
+    theta_n = k * theta_gn + (1 - k) * theta_an;
+    return theta_n;
 }
 
 //-------------------------------------------------------------------------
