@@ -2,6 +2,8 @@
     "files.associations": {
         "cmath": "cpp",
         "cstdlib": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "optional": "cpp",
+        "system_error": "cpp"
     }
 }

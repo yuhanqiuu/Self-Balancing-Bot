@@ -163,6 +163,24 @@ void loop() {
     digitalWrite(LED_BUILTIN, HIGH); // Turn on LED to indicate connection
 
     while (central.connected()) {
+      // get angle and pid output
+      theta_n = getAngle(theta_n); 
+
+      float motorOutput = PID(0, theta_n); 
+
+      int leftSpeed = abs(motorOutput);
+      int rightSpeed = abs(motorOutput);
+
+      // only balance
+      if (motorOutput > 0) {
+        backward_slow(leftSpeed, rightSpeed);
+      } else if (motorOutput < 0) {
+        forward_slow(leftSpeed, rightSpeed);
+      } else {
+        forward(0, 0);
+      }
+
+
         
       // Check if the characteristic was written
       if (customCharacteristic.written()) {
@@ -175,38 +193,24 @@ void loop() {
         memcpy(receivedString, receivedData, length);
         receivedString[length] = '\0'; 
 
-        // get angle and pid output
-        theta_n = getAngle(theta_n); // Get updated tilt angle
-
-        float motorOutput = PID(0, theta_n); // Balance bot
-
-        // Adjust movement based on Bluetooth input
-        int leftSpeed = abs(motorOutput);
-        int rightSpeed = abs(motorOutput);
-
-        // only balance
-        if (motorOutput > 0) {
-          backward_slow(leftSpeed, rightSpeed);
-        } else if (motorOutput < 0) {
-          forward_slow(leftSpeed, rightSpeed);
-        } else {
-          forward(0, 0);
-        }
-
 
          if (strcmp(receivedString, "W") == 0) {
           Serial.println("W");
+          setpoint = 1; // setpoint for PID for fowward, 1 degree
           
         } 
         else if (strcmp(receivedString, "S") == 0) {
           Serial.println("S");
+          setpoint = -1; // setpoint for PID for fowward, 1 degree
           
         } 
-        else if (strcmp(receivedString, "A") == 0) {
+        else if (strcmp(receivedString, "A") == 0) { // left
           Serial.println("A");
+          rfw_lbw(leftSpeed, rightSpeed);
         } 
         else if (strcmp(receivedString, "D") == 0) {
           Serial.println("D");
+          lfw_rbw(leftSpeed, rightSpeed);
         } 
         else {
           Serial.println("Invalid Command");
