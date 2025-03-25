@@ -4,7 +4,7 @@ import numpy as np
 
 #OBJECT CLASSIFICATION PROGRAM FOR VIDEO IN IP ADDRESS
 
-url = 'http://192.168.137.150/cam-lo.jpg'
+url = 'http://192.168.137.122/jpeg'
 #url = 'http://192.168.1.6/'
 winName = 'ESP32 CAMERA'
 cv2.namedWindow(winName,cv2.WINDOW_AUTOSIZE)
@@ -19,7 +19,7 @@ configPath = 'ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt'
 weightsPath = 'frozen_inference_graph.pb'
 
 net = cv2.dnn_DetectionModel(weightsPath,configPath)
-net.setInputSize(320,320)
+net.setInputSize(320,240)
 #net.setInputSize(480,480)
 net.setInputScale(1.0/127.5)
 net.setInputMean((127.5, 127.5, 127.5))
@@ -34,14 +34,18 @@ while(1):
     #img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) #black and white
 
     
+    frame_count = 0
+    detect_every = 20  # Perform detection every 3 frames
 
-    classIds, confs, bbox = net.detect(img,confThreshold=0.5)
-    print(classIds,bbox)
+    if (frame_count % detect_every)==0:
 
-    if len(classIds) != 0:
-        for classId, confidence,box in zip(classIds.flatten(),confs.flatten(),bbox):
-            cv2.rectangle(img,box,color=(0,255,0),thickness = 3) #mostramos en rectangulo lo que se encuentra
-            cv2.putText(img, classNames[classId-1], (box[0]+10,box[1]+30), cv2.FONT_HERSHEY_COMPLEX, 1, (0,255,0),2)
+        classIds, confs, bbox = net.detect(img,confThreshold=0.5)
+        print(classIds,bbox)
+
+        if len(classIds) != 0:
+            for classId, confidence,box in zip(classIds.flatten(),confs.flatten(),bbox):
+                cv2.rectangle(img,box,color=(0,255,0),thickness = 3) #mostramos en rectangulo lo que se encuentra
+                cv2.putText(img, classNames[classId-1], (box[0]+10,box[1]+30), cv2.FONT_HERSHEY_COMPLEX, 1, (0,255,0),2)
 
 
     cv2.imshow(winName,img) #  show the picture
@@ -51,3 +55,4 @@ while(1):
     if tecla == 27:
         break
 cv2.destroyAllWindows()
+

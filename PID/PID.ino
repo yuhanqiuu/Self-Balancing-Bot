@@ -10,6 +10,7 @@
 #include <math.h>
 #include <PID_v1.h>
 #include "movement.h"
+#include "AS5600.h"
 
 //-------------------------------------------------------------------------
 
@@ -44,11 +45,9 @@ float maxPID = 1000;
 // for gyroscope
 float x, y, z;
 
-// Variables for Time Keeper function:
-#define LOOP_TIME 5          // Time in ms (10ms = 100Hz)
-unsigned long timerValue = 0;
+// AS5600
+AS5600 as5600;   //  use default Wire
 
-// PID myPID(&theta_n, &pidOutput, &Setpoint, Kp, Ki, Kd, DIRECT); // initialize PID controller
 
 float PID(float setpoint, float currentValue){
   float output = 0;
@@ -139,14 +138,35 @@ void setup() {
  
   Serial.setTimeout(10);
   // Motor setup should be done in movement.h
+
+
+  // AS5600 setup
+  while(!Serial);
+  Serial.begin(115200);
+  Serial.println(__FILE__);
+  Serial.print("AS5600_LIB_VERSION: ");
+  Serial.println(AS5600_LIB_VERSION);
+  Serial.println();
+
+  Wire.begin();
+
+  as5600.begin(4);  //  set direction pin.
+  as5600.setDirection(AS5600_CLOCK_WISE);  //  default, just be explicit.
+
+  Serial.println(as5600.getAddress());
+
+  // as5600.setAddress(0x40);  //  AS5600L only
+
+  int b = as5600.isConnected();
+  Serial.print("Connect: ");
+  Serial.println(b);
+
 }
 //-------------------------------------------------------------------------
 
 
 void loop(){
 
-  // if (micros() - timerValue > LOOP_TIME) {
-	timerValue = micros();
 
     keyboard_test();
 
@@ -154,18 +174,18 @@ void loop(){
     old_theta_n = theta_n;
     int leftpwm;
     int rightpwm;
+    float currentAngleMotor = as5600.readAngle() * (360.0 / 4096.0);  // Convert raw to degrees
 
     
     // Run the PID controller
       float result = PID(0, theta_n); // targe value = 0, current value = theta_n, pid output
-      // float motorOutput = constrain(map(abs(result),0,1000,50,255),50,255); // pwm output
-      // result = constrain(result, -500, 500);
-      // float motorOutput = map(result, -1000, 1000, -255, 255);
 
       // leftpwm = (int) abs(motorOutput*0.9);
       // rightpwm = (int) abs(motorOutput);
       leftpwm = (int) abs(result);
       rightpwm = (int) abs(result * 0.9);
+      float leftrpm = as5600.getAngularSpeed(AS5600_MODE_RPM);
+
 
     if(result < 5){
       forward_slow(leftpwm, rightpwm);
@@ -199,9 +219,13 @@ void loop(){
       Serial.print("\t");
       Serial.print(Kd);
       Serial.print("\t");
+      Serial.print(leftrpm);
+      Serial.print("\t");
+      Serial.print(currentAngleMotor);
+      Serial.print("\t");
       Serial.println(result);
       // Serial.print("\t");
       // Serial.println(motorOutput);
 
-  //  }
+  
 }

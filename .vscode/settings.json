@@ -3,7 +3,17 @@
         "cmath": "cpp",
         "cstdlib": "cpp",
         "ostream": "cpp",
+<<<<<<< HEAD
         "optional": "cpp",
         "system_error": "cpp"
+=======
+        "initializer_list": "cpp",
+        "list": "cpp",
+        "utility": "cpp",
+        "vector": "cpp",
+        "xhash": "cpp",
+        "xstring": "cpp",
+        "xutility": "cpp"
+>>>>>>> d631d3af2213d056268d445fb98e1c7aa2291edf
     }
 }

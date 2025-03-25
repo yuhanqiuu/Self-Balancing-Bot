@@ -1,6 +1,7 @@
+
 #include <WebServer.h>
 #include <WiFi.h>
-#include "WifiCam.hpp"
+#include <esp32cam.h>
 
 const char *WIFI_SSID = "Hotpot";
 const char *WIFI_PASS = "hahahaha";
