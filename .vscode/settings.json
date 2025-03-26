@@ -4,9 +4,12 @@
         "cstdlib": "cpp",
         "ostream": "cpp",
 <<<<<<< HEAD
+<<<<<<< HEAD
         "optional": "cpp",
         "system_error": "cpp"
 =======
+=======
+>>>>>>> e38d39f5f09af239d88fd6f10040776f56343b71
         "initializer_list": "cpp",
         "list": "cpp",
         "utility": "cpp",
@@ -14,6 +17,9 @@
         "xhash": "cpp",
         "xstring": "cpp",
         "xutility": "cpp"
+<<<<<<< HEAD
 >>>>>>> d631d3af2213d056268d445fb98e1c7aa2291edf
+=======
+>>>>>>> e38d39f5f09af239d88fd6f10040776f56343b71
     }
 }

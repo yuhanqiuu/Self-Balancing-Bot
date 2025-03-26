@@ -190,32 +190,6 @@ void loop() {
 
     }
       else forward(0, 0);
-      // Serial.print(theta_n);
-      // Serial.print("\t");
-      // Serial.print(leftpwm);
-      // Serial.print("\t");
-      // Serial.print(rightpwm);
-      // Serial.print("\t");
-      // Serial.print(proportional);
-      // Serial.print("\t");
-      // Serial.print(derivative);
-      // Serial.print("\t");
-      // Serial.print(integral);
-      // Serial.print("\t");
-      // Serial.print(dt,5);
-      // Serial.print("\t");
-      // Serial.print(Kp);
-      // Serial.print("\t");
-      // Serial.print(Ki);
-      // Serial.print("\t");
-      // Serial.print(Kd);
-      // // Serial.print("\t");
-      // // Serial.print(leftrpm);
-      // Serial.print("\t");
-      // Serial.println(result);
-
-
-        
       // Check if the characteristic was written
       if (customCharacteristic.written()) {
         int length = customCharacteristic.valueLength();
@@ -245,12 +219,7 @@ void loop() {
         else if (strcmp(receivedString, "D") == 0) {
           Serial.println("D");
           lfw_rbw(leftpwm, rightpwm);
-        } 
-        else {
-          Serial.println("Invalid Command");
         }
-      }
-
         // Optionally, respond by updating the characteristic's value
         customCharacteristic.writeValue("Data received");
       }
