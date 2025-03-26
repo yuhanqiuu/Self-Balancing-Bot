@@ -54,7 +54,7 @@ float PID(float setpoint, float currentValue){
 
   proportional = Kp * error;
 
-  integral += Ki * dt * (error + previousError) / 2.0;
+  integral += dt * error;
   integral = constrain(integral, -30, 30);  // Example limit
 
 
@@ -66,16 +66,16 @@ float PID(float setpoint, float currentValue){
         derivative = 0; // filters out noise
     }
     
-    output = K_mast * ( proportional + integral + derivative );    // computes sum of error
+    output = constain(K_mast * ( proportional + integral + derivative ), -230.0, 230.0);    // computes sum of error
     // output = constrain(output, -1000, 1000);  // limits output of PID to limits of PWM
     
     previousError = error; // update the previous error
 
-    if(output>255){
-      output = 255;
-    } else if(output <-255){
-      output = -255;
-    }
+    // if(output>255){
+    //   output = 255;
+    // } else if(output <-255){
+    //   output = -255;
+    // }
 
   return output;
 }
@@ -151,10 +151,10 @@ void setup() {
 
   Serial.println("Bluetooth® device active, waiting for connections...");
 }
-
 void loop() {
+  keyboard_test();
+  
   // Wait for a BLE central to connect
-
   BLEDevice central = BLE.central();
   
   if (central) {
@@ -166,34 +166,26 @@ void loop() {
       // get angle and pid output
       theta_n = getAngle(theta_n); 
 
-      float motorOutput = PID(0, theta_n); 
       int leftpwm;
       int rightpwm;
 
-    // Run the PID controller
-      float result = PID(0, theta_n); // targe value = 0, current value = theta_n, pid output
+      // Run the PID controller
+      float result = PID(0, theta_n); // target value = 0, current value = theta_n, pid output
 
-      // leftpwm = (int) abs(motorOutput*0.9);
-      // rightpwm = (int) abs(motorOutput);
-      leftpwm = (int) abs(result);
-      rightpwm = (int) abs(result * 0.9);
-      // float leftrpm = as5600.getAngularSpeed(AS5600_MODE_RPM);
+      leftpwm = (int) abs(result * 1.3);
+      rightpwm = (int) abs(result);
 
+      if (result < 5) {
+        forward_slow(leftpwm, rightpwm);
+      } else if (result > -5) {
+        backward_slow(leftpwm, rightpwm);
+      } else {
+        forward(0, 0);
+      }
 
-    if(result < 5){
-      forward_slow(leftpwm, rightpwm);
-      // forward(leftpwm,rightpwm);
-
-    } else if (result > -5){
-      backward_slow(leftpwm,rightpwm);
-      // backward(leftpwm,rightpwm);
-
-    }
-      else forward(0, 0);
       // Check if the characteristic was written
       if (customCharacteristic.written()) {
         int length = customCharacteristic.valueLength();
-
         const unsigned char* receivedData = customCharacteristic.value();
 
         // Create a properly terminated string
@@ -201,31 +193,31 @@ void loop() {
         memcpy(receivedString, receivedData, length);
         receivedString[length] = '\0'; 
 
-
-         if (strcmp(receivedString, "W") == 0) {
+        if (strcmp(receivedString, "W") == 0) {
           Serial.println("W");
-          setpoint = 1; // setpoint for PID for fowward, 1 degree
-          
+          setpoint = 1; // setpoint for PID for forward, 1 degree
         } 
         else if (strcmp(receivedString, "S") == 0) {
           Serial.println("S");
-          setpoint = -1; // setpoint for PID for fowward, 1 degree
-          
+          setpoint = -1; // setpoint for PID for backward, 1 degree
         } 
         else if (strcmp(receivedString, "A") == 0) { // left
           Serial.println("A");
           rfw_lbw(leftpwm, rightpwm);
         } 
-        else if (strcmp(receivedString, "D") == 0) {
+        else if (strcmp(receivedString, "D") == 0) { // right
           Serial.println("D");
           lfw_rbw(leftpwm, rightpwm);
         }
+
         // Optionally, respond by updating the characteristic's value
         customCharacteristic.writeValue("Data received");
       }
     }
 
+    // **Moved these inside the `if (central)` block**
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     Serial.println("Disconnected from central.");
+  }
 }
 
