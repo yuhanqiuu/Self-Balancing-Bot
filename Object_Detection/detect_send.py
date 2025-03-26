@@ -1,6 +1,7 @@
 import cv2 #opencv
 import urllib.request #to open and read URL
 import numpy as np
+from send_email_utils import send_email_with_frame
 
 #OBJECT CLASSIFICATION PROGRAM FOR VIDEO IN IP ADDRESS
 
@@ -33,6 +34,7 @@ while(1):
     #img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE) # vertical
     #img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) #black and white
     
+    
     frame_count = 0
     detect_every = 20  # Perform detection every 3 frames
 
@@ -51,7 +53,16 @@ while(1):
 
     #wait for ESC to be pressed to end the program
     tecla = cv2.waitKey(5) & 0xFF
-    if tecla == 27:
+    if tecla == ord('1'):
+        print("Sending email...")
+        send_email_with_frame(
+            sender_email="qiuyuhan66@gmail.com",
+            receiver_email="qiuyuhan66@gmail.com",
+            app_password="zklynsxlbrsvoyrv",  # Replace with your real app password
+            image=img
+        )
+
+    elif tecla == 27:
         break
 cv2.destroyAllWindows()
 
