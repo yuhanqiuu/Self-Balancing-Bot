@@ -12,9 +12,9 @@ float old_theta_n = 0;
 String input;
 int task = 0;
 
-float Kp = 30;          // (P)roportional Tuning Parameter 12-14?
-float Ki = 0;          // (I)ntegral Tuning Parameter        
-float Kd = 0;          // (D)erivative Tuning Parameter   1049
+float Kp = 18;          // (P)roportional Tuning Parameter 12-14?
+float Ki = 8;          // (I)ntegral Tuning Parameter        
+float Kd = 1.5;          // (D)erivative Tuning Parameter   1049
 float K_mast = 1.0;
     
 // PID Variables
@@ -196,11 +196,11 @@ void loop() {
 
          if (strcmp(receivedString, "W") == 0) {
           Serial.println("W");
-          
+          setpoint = 1;
         } 
         else if (strcmp(receivedString, "S") == 0) {
           Serial.println("S");
-          
+          setpoint = -1;
         } 
         else if (strcmp(receivedString, "A") == 0) {
           Serial.println("A");

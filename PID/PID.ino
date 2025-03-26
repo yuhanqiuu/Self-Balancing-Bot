@@ -20,9 +20,9 @@ float old_theta_n = 0;
 String input;
 int task = 0;
 
-float Kp = 13;          // (P)roportional Tuning Parameter prob around 17
-float Ki = 0.1;          // (I)ntegral Tuning Parameter 10?       
-float Kd = 1.3;          // (D)erivative Tuning Parameter   around 1 
+float Kp = 18;          // (P)roportional Tuning Parameter prob around 17
+float Ki = 8;          // (I)ntegral Tuning Parameter 10?       
+float Kd = 1.5;          // (D)erivative Tuning Parameter   around 1 
 float K_mast = 1.0;
     
 // PID Variables
@@ -37,7 +37,7 @@ float currentTime = 0;
 
 float theta_n = 0;     // current angle inputs???
 float pidOutput = 0;   // PID output
-float setpoint = 0;
+float setpoint = -0.8;
 //-------------------------------------------------------------------------
 float maxPID = 1000; 
 
@@ -163,7 +163,7 @@ void loop(){
       // float motorOutput = map(result, -1000, 1000, -255, 255);
 
       
-      leftpwm = (int) abs(result)*1.7;
+      leftpwm = (int) abs(result)*1.3;
       rightpwm = (int) abs(result);
 
       //given left pwm = 7.58 * exp(7.89E-3 * rpm), we can calculate rpm from pwm
