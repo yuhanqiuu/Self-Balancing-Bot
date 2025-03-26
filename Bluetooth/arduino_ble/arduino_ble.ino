@@ -4,7 +4,6 @@
 
 #define BUFFER_SIZE 20
 
-// For PID
 
 // Global Variables
 char userInput;
@@ -24,61 +23,18 @@ float proportional = 0;
 float derivative = 0;
 unsigned long lastTime = 0;
 float dt = 0;
-float currentTime = 0;
+unsigned long currentTime = 0;
 
 
 float theta_n = 0;     // current angle inputs???
 float pidOutput = 0;   // PID output
 float setpoint = 0;
-//-------------------------------------------------------------------------
-float maxPID = 1000; 
-
 
 
 // Define a custom BLE service and characteristic
 BLEService customService("00000000-5EC4-4083-81CD-A10B8D5CF6EC");
 BLECharacteristic customCharacteristic(
     "00000001-5EC4-4083-81CD-A10B8D5CF6EC", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
-
-
-// PID contoller 
-float PID(float setpoint, float currentValue){
-  float output = 0;
-  //   currentTime = micros();
-  //   dt = (currentTime - lastTime) / 1000000.0;  // Time difference in seconds
-  // lastTime = currentTime;
-  dt = (float) (micros() - currentTime) / 1000000.0;  // gets time for ∆t
-  currentTime = micros();  // sets new current time
-
-  float error = setpoint - currentValue;
-
-  proportional = Kp * error;
-
-  integral += dt * error;
-  integral = constrain(integral, -30, 30);  // Example limit
-
-
-  // Derivative term (rate of change of error)
-  derivative = (error - previousError) / dt;
-  if (theta_n - old_theta_n > 0.1 || theta_n - old_theta_n < -0.1) 
-        derivative = -Kd * (theta_n - old_theta_n)/dt; // computes the derivative error
-    else{ 
-        derivative = 0; // filters out noise
-    }
-    
-    output = constain(K_mast * ( proportional + integral + derivative ), -230.0, 230.0);    // computes sum of error
-    // output = constrain(output, -1000, 1000);  // limits output of PID to limits of PWM
-    
-    previousError = error; // update the previous error
-
-    // if(output>255){
-    //   output = 255;
-    // } else if(output <-255){
-    //   output = -255;
-    // }
-
-  return output;
-}
 
 void keyboard_test (void) {
   if (Serial.available() > 0) {
@@ -112,6 +68,45 @@ void keyboard_test (void) {
           if(input == "0" || input.toFloat() > 0) Kd = input.toFloat();
       break;
   }
+}
+
+// PID contoller 
+float PID(float setpoint, float currentValue){
+  float output = 0;
+  //   currentTime = micros();
+  //   dt = (currentTime - lastTime) / 1000000.0;  // Time difference in seconds
+  // lastTime = currentTime;
+  dt = (float) (micros() - currentTime) / 1000000.0;  // gets time for ∆t
+  currentTime = micros();  // sets new current time
+
+  float error = setpoint - currentValue;
+
+  proportional = Kp * error;
+
+  integral += dt * error;
+  integral = constrain(integral, -30, 30);  // Example limit
+
+
+  // Derivative term (rate of change of error)
+  derivative = (error - previousError) / dt;
+  if (theta_n - old_theta_n > 0.1 || theta_n - old_theta_n < -0.1) 
+        derivative = -Kd * (theta_n - old_theta_n)/dt; // computes the derivative error
+    else{ 
+        derivative = 0; // filters out noise
+    }
+    
+    output = constrain(K_mast * ( proportional + integral + derivative ), -230.0, 230.0);    // computes sum of error
+    // output = constrain(output, -1000, 1000);  // limits output of PID to limits of PWM
+    
+    previousError = error; // update the previous error
+
+    // if(output>255){
+    //   output = 255;
+    // } else if(output <-255){
+    //   output = -255;
+    // }
+
+  return output;
 }
 
 
@@ -151,21 +146,23 @@ void setup() {
 
   Serial.println("Bluetooth® device active, waiting for connections...");
 }
+
 void loop() {
-  keyboard_test();
-  
   // Wait for a BLE central to connect
   BLEDevice central = BLE.central();
-  
+
   if (central) {
     Serial.print("Connected to central: ");
     Serial.println(central.address());
     digitalWrite(LED_BUILTIN, HIGH); // Turn on LED to indicate connection
 
+    // Keep running while connected
     while (central.connected()) {
+
       // get angle and pid output
       theta_n = getAngle(theta_n); 
 
+      float motorOutput = PID(0, theta_n); 
       int leftpwm;
       int rightpwm;
 
@@ -182,16 +179,23 @@ void loop() {
       } else {
         forward(0, 0);
       }
+      Serial.print(dt,5);
+      Serial.print("\t");
+      Serial.println("not broken");
+
 
       // Check if the characteristic was written
       if (customCharacteristic.written()) {
+       // Get the length of the received data
         int length = customCharacteristic.valueLength();
+
+        // Read the received data
         const unsigned char* receivedData = customCharacteristic.value();
 
         // Create a properly terminated string
-        char receivedString[length + 1]; 
+        char receivedString[length + 1]; // +1 for null terminator
         memcpy(receivedString, receivedData, length);
-        receivedString[length] = '\0'; 
+        receivedString[length] = '\0'; // Null-terminate the string
 
         if (strcmp(receivedString, "W") == 0) {
           Serial.println("W");
@@ -210,14 +214,10 @@ void loop() {
           lfw_rbw(leftpwm, rightpwm);
         }
 
-        // Optionally, respond by updating the characteristic's value
-        customCharacteristic.writeValue("Data received");
       }
     }
 
-    // **Moved these inside the `if (central)` block**
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     Serial.println("Disconnected from central.");
   }
 }
-
