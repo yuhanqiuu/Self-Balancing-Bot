@@ -5,11 +5,10 @@ from send_email_utils import send_email_with_frame
 
 #OBJECT CLASSIFICATION PROGRAM FOR VIDEO IN IP ADDRESS
 sender_email="qiuyuhan66@gmail.com"
-receiver_email="qiuyuhan66@gmail.com",
+receiver_email="jennify868@gmail.com"
 app_password="zklynsxlbrsvoyrv"
 
 url = 'http://192.168.137.134/jpeg'
-#url = 'http://192.168.1.6/'
 winName = 'ESP32 CAMERA'
 cv2.namedWindow(winName,cv2.WINDOW_AUTOSIZE)
 #scale_percent = 80 # percent of original size    #for image processing
@@ -45,7 +44,7 @@ while(1):
     if (frame_count % detect_every)==0:
 
         classIds, confs, bbox = net.detect(img,confThreshold=0.5)
-        print(classIds,bbox)
+        # print(classIds,bbox)
 
         if len(classIds) != 0:
             for classId, confidence,box in zip(classIds.flatten(),confs.flatten(),bbox):
@@ -58,12 +57,15 @@ while(1):
     #wait for ESC to be pressed to end the program
     tecla = cv2.waitKey(5) & 0xFF
     if tecla == ord('1'):
-        print("Sending email...")
+        print("Sending photo with object detection...")
         send_email_with_frame(sender_email, receiver_email, app_password, image=img)
     
     if tecla == ord('2'):
-        print("Sending email...")
+        print("Sending original photo...")
         send_email_with_frame(sender_email, receiver_email, app_password, image=unchanged_img)
+
+    if tecla == ord('3'):
+        receiver_email = input("Change the receiver email to: ")
 
     elif tecla == 27:
         break
