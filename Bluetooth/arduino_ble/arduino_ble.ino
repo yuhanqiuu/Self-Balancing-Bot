@@ -12,9 +12,9 @@ float old_theta_n = 0;
 String input;
 int task = 0;
 
-float Kp = 30;          // (P)roportional Tuning Parameter 12-14?
-float Ki = 0;          // (I)ntegral Tuning Parameter        
-float Kd = 0;          // (D)erivative Tuning Parameter   1049
+float Kp = 18;          // (P)roportional Tuning Parameter 12-14?
+float Ki = 8;          // (I)ntegral Tuning Parameter        
+float Kd = 1.5;          // (D)erivative Tuning Parameter   1049
 float K_mast = 1.0;
     
 // PID Variables
@@ -167,18 +167,52 @@ void loop() {
       theta_n = getAngle(theta_n); 
 
       float motorOutput = PID(0, theta_n); 
+      int leftpwm;
+      int rightpwm;
 
-      int leftSpeed = abs(motorOutput);
-      int rightSpeed = abs(motorOutput);
+    // Run the PID controller
+      float result = PID(0, theta_n); // targe value = 0, current value = theta_n, pid output
 
-      // only balance
-      if (motorOutput > 0) {
-        backward_slow(leftSpeed, rightSpeed);
-      } else if (motorOutput < 0) {
-        forward_slow(leftSpeed, rightSpeed);
-      } else {
-        forward(0, 0);
-      }
+      // leftpwm = (int) abs(motorOutput*0.9);
+      // rightpwm = (int) abs(motorOutput);
+      leftpwm = (int) abs(result);
+      rightpwm = (int) abs(result * 0.9);
+      // float leftrpm = as5600.getAngularSpeed(AS5600_MODE_RPM);
+
+
+    if(result < 5){
+      forward_slow(leftpwm, rightpwm);
+      // forward(leftpwm,rightpwm);
+
+    } else if (result > -5){
+      backward_slow(leftpwm,rightpwm);
+      // backward(leftpwm,rightpwm);
+
+    }
+      else forward(0, 0);
+      // Serial.print(theta_n);
+      // Serial.print("\t");
+      // Serial.print(leftpwm);
+      // Serial.print("\t");
+      // Serial.print(rightpwm);
+      // Serial.print("\t");
+      // Serial.print(proportional);
+      // Serial.print("\t");
+      // Serial.print(derivative);
+      // Serial.print("\t");
+      // Serial.print(integral);
+      // Serial.print("\t");
+      // Serial.print(dt,5);
+      // Serial.print("\t");
+      // Serial.print(Kp);
+      // Serial.print("\t");
+      // Serial.print(Ki);
+      // Serial.print("\t");
+      // Serial.print(Kd);
+      // // Serial.print("\t");
+      // // Serial.print(leftrpm);
+      // Serial.print("\t");
+      // Serial.println(result);
 
 
         
@@ -206,11 +240,11 @@ void loop() {
         } 
         else if (strcmp(receivedString, "A") == 0) { // left
           Serial.println("A");
-          rfw_lbw(leftSpeed, rightSpeed);
+          rfw_lbw(leftpwm, rightpwm);
         } 
         else if (strcmp(receivedString, "D") == 0) {
           Serial.println("D");
-          lfw_rbw(leftSpeed, rightSpeed);
+          lfw_rbw(leftpwm, rightpwm);
         } 
         else {
           Serial.println("Invalid Command");
