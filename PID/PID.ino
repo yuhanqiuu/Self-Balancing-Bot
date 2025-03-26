@@ -20,9 +20,9 @@ float old_theta_n = 0;
 String input;
 int task = 0;
 
-float Kp = 17;          // (P)roportional Tuning Parameter prob around 17
-float Ki = 0;          // (I)ntegral Tuning Parameter 10?       
-float Kd = 0.7;          // (D)erivative Tuning Parameter   around 1 
+float Kp = 13;          // (P)roportional Tuning Parameter prob around 17
+float Ki = 0.1;          // (I)ntegral Tuning Parameter 10?       
+float Kd = 1.3;          // (D)erivative Tuning Parameter   around 1 
 float K_mast = 1.0;
     
 // PID Variables
@@ -65,7 +65,7 @@ float PID(float setpoint, float currentValue){
   proportional = Kp * error;
 
   integral += dt * error;
-  integral = constrain(integral, -50, 50);  // Example limit
+  integral = constrain(integral, -30, 30);  // Example limit
 
 
   // Derivative term (rate of change of error)
@@ -162,17 +162,19 @@ void loop(){
       // result = constrain(result, -500, 500);
       // float motorOutput = map(result, -1000, 1000, -255, 255);
 
-      // leftpwm = (int) abs(motorOutput*0.9);
-      // rightpwm = (int) abs(motorOutput);
-      leftpwm = (int) abs(result);
-      rightpwm = (int) abs(result * 0.9);
+      
+      leftpwm = (int) abs(result)*1.7;
+      rightpwm = (int) abs(result);
 
+      //given left pwm = 7.58 * exp(7.89E-3 * rpm), we can calculate rpm from pwm
+      float leftrpm = log(leftpwm/7.58)/7.89E-3; 
+      float rightpwm1 = 8.33 * exp(7.55E-3 * leftrpm);
     if(result < 5){
-      forward_slow(leftpwm, rightpwm);
+      forward_slow(rightpwm, leftpwm);
       // forward(leftpwm,rightpwm);
 
     } else if (result > -5){
-      backward_slow(leftpwm,rightpwm);
+      backward_slow(rightpwm, leftpwm);
       // backward(leftpwm,rightpwm);
 
     }
