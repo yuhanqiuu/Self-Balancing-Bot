@@ -4,8 +4,11 @@ import numpy as np
 from send_email_utils import send_email_with_frame
 
 #OBJECT CLASSIFICATION PROGRAM FOR VIDEO IN IP ADDRESS
+sender_email="qiuyuhan66@gmail.com"
+receiver_email="qiuyuhan66@gmail.com",
+app_password="zklynsxlbrsvoyrv"
 
-url = 'http://192.168.137.33/jpeg'
+url = 'http://192.168.137.134/jpeg'
 #url = 'http://192.168.1.6/'
 winName = 'ESP32 CAMERA'
 cv2.namedWindow(winName,cv2.WINDOW_AUTOSIZE)
@@ -30,11 +33,11 @@ while(1):
     imgResponse = urllib.request.urlopen (url) # here open the URL
     imgNp = np.array(bytearray(imgResponse.read()),dtype=np.uint8)
     img = cv2.imdecode (imgNp,-1) #decodificamos
-    unchanged_img = img
 
+    unchanged_img = img.copy()
+    
     #img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE) # vertical
     #img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) #black and white
-    
     
     frame_count = 0
     detect_every = 20  # Perform detection every 3 frames
@@ -56,12 +59,11 @@ while(1):
     tecla = cv2.waitKey(5) & 0xFF
     if tecla == ord('1'):
         print("Sending email...")
-        send_email_with_frame(
-            sender_email="qiuyuhan66@gmail.com",
-            receiver_email="qiuyuhan66@gmail.com",
-            app_password="zklynsxlbrsvoyrv",  # Replace with your real app password
-            image=unchanged_img
-        )
+        send_email_with_frame(sender_email, receiver_email, app_password, image=img)
+    
+    if tecla == ord('2'):
+        print("Sending email...")
+        send_email_with_frame(sender_email, receiver_email, app_password, image=unchanged_img)
 
     elif tecla == 27:
         break
