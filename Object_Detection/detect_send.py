@@ -30,6 +30,7 @@ while(1):
     imgResponse = urllib.request.urlopen (url) # here open the URL
     imgNp = np.array(bytearray(imgResponse.read()),dtype=np.uint8)
     img = cv2.imdecode (imgNp,-1) #decodificamos
+    unchanged_img = img
 
     #img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE) # vertical
     #img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) #black and white
@@ -59,7 +60,7 @@ while(1):
             sender_email="qiuyuhan66@gmail.com",
             receiver_email="qiuyuhan66@gmail.com",
             app_password="zklynsxlbrsvoyrv",  # Replace with your real app password
-            image=img
+            image=unchanged_img
         )
 
     elif tecla == 27:
