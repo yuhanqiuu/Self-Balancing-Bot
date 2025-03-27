@@ -11,9 +11,9 @@ float old_theta_n = 0;
 String input;
 int task = 0;
 
-float Kp = 15;          // (P)roportional Tuning Parameter 12-14? 18
-float Ki = 8;          // (I)ntegral Tuning Parameter        8
-float Kd = 5;          // (D)erivative Tuning Parameter   2
+float Kp = 18;          // (P)roportional Tuning Parameter 12-14? 18
+float Ki = 0;          // (I)ntegral Tuning Parameter        8
+float Kd = 0.6;          // (D)erivative Tuning Parameter   0.6
 float K_mast = 1.0;
     
 // PID Variables
@@ -83,7 +83,7 @@ float PID(float setpoint, float currentValue){
 
   proportional = Kp * error;
 
-  integral += dt * error;
+  integral += Ki * dt * error;
   integral = constrain(integral, -30, 30);  // Example limit
 
 
@@ -163,14 +163,13 @@ void loop() {
     while (central.connected()) {
     keyboard_test();
 
-
-    theta_n = getAngle(old_theta_n); // angles 
     old_theta_n = theta_n;
+    theta_n = getAngle(old_theta_n); // angles 
    // float currentAngleMotor = as5600.readAngle() * (360.0 / 4096.0);  // Convert raw to degrees
 
     
     // Run the PID controller
-      float result = PID(0, theta_n); // targe value = 0, current value = theta_n, pid output
+      float result = PID(setpoint, theta_n); // targe value = 0, current value = theta_n, pid output
       // float motorOutput = constrain(map(abs(result),0,1000,50,255),50,255); // pwm output
       // result = constrain(result, -500, 500);
       // float motorOutput = map(result, -1000, 1000, -255, 255);
@@ -255,14 +254,16 @@ void loop() {
     Serial.println("Disconnected from central.");
   }
 
-    theta_n = getAngle(old_theta_n); // angles 
-    old_theta_n = theta_n;
+  keyboard_test();
+  old_theta_n = theta_n; 
+  theta_n = getAngle(old_theta_n); // angles 
     
+
    // float currentAngleMotor = as5600.readAngle() * (360.0 / 4096.0);  // Convert raw to degrees
 
     
     // Run the PID controller
-      float result = PID(0, theta_n); // targe value = 0, current value = theta_n, pid output
+      float result = PID(setpoint, theta_n); // targe value = 0, current value = theta_n, pid output
       // float motorOutput = constrain(map(abs(result),0,1000,50,255),50,255); // pwm output
       // result = constrain(result, -500, 500);
       // float motorOutput = map(result, -1000, 1000, -255, 255);
