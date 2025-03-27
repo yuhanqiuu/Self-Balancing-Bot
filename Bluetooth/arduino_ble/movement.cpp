@@ -3,8 +3,8 @@
 #include <math.h>
 #include "Arduino_BMI270_BMM150.h"
 
-// float theta_n = 0;
 unsigned long ct = 0;
+
 //-------------------------------------------------------------------------
 
 // Convert RPM to PWM for left and right motors
@@ -87,7 +87,6 @@ void backward_slow(int pwm1, int pwm2){
     analogWrite(BIN1, pwm2);
     digitalWrite(BIN2, HIGH);
   
-   
   }
   
   //right foward, left backward
@@ -125,21 +124,8 @@ float getAngle(float theta_n)
     float x, y, z;
     float theta_an, theta_gn = 0;
 
-
     float dt = (float) (micros() - ct) / 1000000;  // gets time for ∆t
     ct = micros();  // sets new current time
-    
-    // if (IMU.accelerationAvailable())
-    // {
-    //     IMU.readAcceleration(x, y, z);
-    //     theta_an = atan(y / z) * 180 / M_PI; // might need to change the axis later
-    // }
-
-    // if (IMU.gyroscopeAvailable())
-    // {
-    //     IMU.readGyroscope(x, y, z);
-    //     theta_gn += x * (1 / IMU.gyroscopeSampleRate());
-    // }
 
     if (IMU.gyroscopeAvailable()) {
         // reads gyroscope value
@@ -163,3 +149,4 @@ float getAngle(float theta_n)
 }
 
 //-------------------------------------------------------------------------
+

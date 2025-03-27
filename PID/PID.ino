@@ -140,26 +140,26 @@ void setup() {
   // Motor setup should be done in movement.h
 
 
-  // // AS5600 setup
-  // while(!Serial);
-  // Serial.begin(115200);
-  // Serial.println(__FILE__);
-  // Serial.print("AS5600_LIB_VERSION: ");
-  // Serial.println(AS5600_LIB_VERSION);
-  // Serial.println();
+  // AS5600 setup
+  while(!Serial);
+  Serial.begin(115200);
+  Serial.println(__FILE__);
+  Serial.print("AS5600_LIB_VERSION: ");
+  Serial.println(AS5600_LIB_VERSION);
+  Serial.println();
 
-  // Wire.begin();
+  Wire.begin();
 
-  // as5600.begin(4);  //  set direction pin.
-  // as5600.setDirection(AS5600_CLOCK_WISE);  //  default, just be explicit.
+  as5600.begin(4);  //  set direction pin.
+  as5600.setDirection(AS5600_CLOCK_WISE);  //  default, just be explicit.
 
-  // Serial.println(as5600.getAddress());
+  Serial.println(as5600.getAddress());
 
-  // // as5600.setAddress(0x40);  //  AS5600L only
+  // as5600.setAddress(0x40);  //  AS5600L only
 
-  // int b = as5600.isConnected();
-  // Serial.print("Connect: ");
-  // Serial.println(b);
+  int b = as5600.isConnected();
+  Serial.print("Connect: ");
+  Serial.println(b);
 
 }
 //-------------------------------------------------------------------------
@@ -174,15 +174,12 @@ void loop(){
     old_theta_n = theta_n;
     int leftpwm;
     int rightpwm;
-   // float currentAngleMotor = as5600.readAngle() * (360.0 / 4096.0);  // Convert raw to degrees
+   float currentAngleMotor = as5600.readAngle() * (360.0 / 4096.0);  // Convert raw to degrees
+   float current_rpm = as5600.getAngularSpeed(AS5600_MODE_RPM);
 
     
     // Run the PID controller
       float result = PID(0, theta_n); // targe value = 0, current value = theta_n, pid output
-      // float motorOutput = constrain(map(abs(result),0,1000,50,255),50,255); // pwm output
-      // result = constrain(result, -500, 500);
-      // float motorOutput = map(result, -1000, 1000, -255, 255);
-
       
       leftpwm = (int) abs(result)*1.3;
       rightpwm = (int) abs(result);
@@ -212,19 +209,18 @@ void loop(){
       // Serial.print("\t");
       // Serial.print(derivative);
       // Serial.print("\t");
-      Serial.print(integral);
-      Serial.print("\t");
-      // Serial.print(dt,5);
-      // Serial.print("\t");
       Serial.print(Kp);
       Serial.print("\t");
       Serial.print(Ki);
       Serial.print("\t");
       Serial.print(Kd);
       Serial.print("\t");
-      Serial.println(result);
-      // Serial.print("\t");
-      // Serial.println(motorOutput);
+      Serial.print(result);
+      Serial.print("\t");
+      Serial.print(currentAngleMotor);
+      Serial.print("\t");
+      Serial.println(current_rpm);
+     
 
   //  }
 }

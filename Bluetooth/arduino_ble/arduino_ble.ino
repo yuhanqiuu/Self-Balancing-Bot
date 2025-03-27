@@ -1,9 +1,13 @@
-#include <ArduinoBLE.h>
-#include "movement.h"
 #include "Arduino_BMI270_BMM150.h"
+#include <math.h>
+#include <PID_v1.h>
+#include "movement.h"
+#include "AS5600.h"
+#include <ArduinoBLE.h>
 
 #define BUFFER_SIZE 20
 
+//-------------------------------------------------------------------------
 
 // Global Variables
 char userInput;
@@ -30,95 +34,119 @@ float theta_n = 0;     // current angle inputs???
 float pidOutput = 0;   // PID output
 float setpoint = 0;
 
+// AS5600
+AS5600 as5600;   //  use default Wire
+
+//-------------------------------------------------------------------------
 
 // Define a custom BLE service and characteristic
 BLEService customService("00000000-5EC4-4083-81CD-A10B8D5CF6EC");
 BLECharacteristic customCharacteristic(
     "00000001-5EC4-4083-81CD-A10B8D5CF6EC", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 
-void keyboard_test (void) {
-  if (Serial.available() > 0) {
-      input = Serial.readString();
-      input.trim();
-      input.toLowerCase();
-  }
+//-------------------------------------------------------------------------
+// PID contoller
 
-  if (input == "kp") {
-      task = 1;
-  }
-  else if (input == "ki") {
-      task = 2;
-  }
-  else if (input == "kd") {
-      task = 3;
-  }
-  else if (input == "reset") {
-    integral = 0;
-  }
-
-
-  switch (task) {
-      case 1:
-          if(input == "0" || input.toFloat() > 0) Kp = input.toFloat();
-      break;
-      case 2:
-          if(input == "0" || input.toFloat() > 0) Ki = input.toFloat();
-      break;
-      case 3:
-          if(input == "0" || input.toFloat() > 0) Kd = input.toFloat();
-      break;
-  }
-}
-
-// PID contoller 
-float PID(float setpoint, float currentValue){
+float PID(float setpoint, float currentValue)
+{
   float output = 0;
-  //   currentTime = micros();
-  //   dt = (currentTime - lastTime) / 1000000.0;  // Time difference in seconds
-  // lastTime = currentTime;
-  dt = (float) (micros() - currentTime) / 1000000.0;  // gets time for ∆t
-  currentTime = micros();  // sets new current time
+  dt = (float)(micros() - currentTime) / 1000000.0; // gets time for ∆t
+  currentTime = micros();                           // sets new current time
 
   float error = setpoint - currentValue;
 
   proportional = Kp * error;
 
   integral += Ki * dt * error;
-  integral = constrain(integral, -30, 30);  // Example limit
-
+  integral = constrain(integral, -30, 30); // Example limit
 
   // Derivative term (rate of change of error)
   derivative = (error - previousError) / dt;
-  if (theta_n - old_theta_n > 0.1 || theta_n - old_theta_n < -0.1) 
-        derivative = -Kd * (theta_n - old_theta_n)/dt; // computes the derivative error
-    else{ 
-        derivative = 0; // filters out noise
-    }
-    
-    output = constrain(K_mast * ( proportional + integral + derivative ), -230.0, 230.0);    // computes sum of error
-    // output = constrain(output, -1000, 1000);  // limits output of PID to limits of PWM
-    
-    previousError = error; // update the previous error
+  if (theta_n - old_theta_n > 0.1 || theta_n - old_theta_n < -0.1)
+    derivative = -Kd * (theta_n - old_theta_n) / dt; // computes the derivative error
+  else
+  {
+    derivative = 0; // filters out noise
+  }
 
-    // if(output>255){
-    //   output = 255;
-    // } else if(output <-255){
-    //   output = -255;
-    // }
+  output = constrain(K_mast * (proportional + integral + derivative), -230.0, 230.0); // computes sum of error
+  // output = constrain(output, -1000, 1000);  // limits output of PID to limits of PWM
+
+  previousError = error; // update the previous error
 
   return output;
 }
+  
+//-------------------------------------------------------------------------
+void keyboard_test(void)
+{
 
+  if (Serial.available() > 0)
+  {
+    input = Serial.readString();
+    input.trim();
+    input.toLowerCase();
+  }
+
+  if (input == "kp")
+  {
+    task = 1;
+  }
+  else if (input == "ki")
+  {
+    task = 2;
+  }
+  else if (input == "kd")
+  {
+    task = 3;
+  }
+  else if (input == "reset")
+  {
+    integral = 0;
+  }
+
+  switch (task)
+  {
+  case 1:
+    if (input == "0" || input.toFloat() > 0)
+      Kp = input.toFloat();
+    break;
+  case 2:
+    if (input == "0" || input.toFloat() > 0)
+      Ki = input.toFloat();
+    break;
+  case 3:
+    if (input == "0" || input.toFloat() > 0)
+      Kd = input.toFloat();
+    break;
+  }
+}
+
+//-------------------------------------------------------------------------
 
 void setup() {
-  Serial.begin(9600);
-  while (!Serial);
+  // Serial.begin(9600);
+  // while (!Serial);
 
   // Initialize IMU for self-balancing
   if (!IMU.begin()) {
     Serial.println("Failed to initialize IMU!");
     while (1);
   }
+
+  //setting up encoder
+  // while(!Serial);
+  // Serial.begin(115200);
+  Wire.begin();
+
+  as5600.begin(4);  //  set direction pin.
+  as5600.setDirection(AS5600_CLOCK_WISE);  //  default, just be explicit.
+
+  Serial.println(as5600.getAddress());
+
+  int b = as5600.isConnected();
+  Serial.print("Connect: ");
+  Serial.println(b);
 
   // Initialize the built-in LED to indicate connection status
   pinMode(LED_BUILTIN, OUTPUT);
@@ -147,12 +175,15 @@ void setup() {
   Serial.println("Bluetooth® device active, waiting for connections...");
 }
 
+//-------------------------------------------------------------------------
+
 void loop() {
   // Wait for a BLE central to connect
   BLEDevice central = BLE.central();
   int leftpwm;
   int rightpwm;
-
+  float current_rpm;
+  float result;
 
   if (central) {
     Serial.print("Connected to central: ");
@@ -161,35 +192,25 @@ void loop() {
 
     // Keep running while connected
     while (central.connected()) {
-    keyboard_test();
+      keyboard_test();
 
-    old_theta_n = theta_n;
-    theta_n = getAngle(old_theta_n); // angles 
-   // float currentAngleMotor = as5600.readAngle() * (360.0 / 4096.0);  // Convert raw to degrees
-
-    
-    // Run the PID controller
-      float result = PID(setpoint, theta_n); // targe value = 0, current value = theta_n, pid output
-      // float motorOutput = constrain(map(abs(result),0,1000,50,255),50,255); // pwm output
-      // result = constrain(result, -500, 500);
-      // float motorOutput = map(result, -1000, 1000, -255, 255);
-
+      old_theta_n = theta_n;
+      theta_n = getAngle(old_theta_n); // angles 
+      current_rpm = as5600.getAngularSpeed(AS5600_MODE_RPM);
       
-    leftpwm = (int) abs(result)*1.3;
-    rightpwm = (int) abs(result);
+      // Run the PID controller
+      result = PID(setpoint, theta_n); // targe value = 0, current value = theta_n, pid output
 
-      //given left pwm = 7.58 * exp(7.89E-3 * rpm), we can calculate rpm from pwm
-      // leftrpm = log(leftpwm/7.58)/7.89E-3; 
-      // rightpwm1 = 8.33 * exp(7.55E-3 * leftrpm);
-    if(result < 5){
-      forward_slow(rightpwm, leftpwm);
-      // forward(leftpwm,rightpwm);
+        
+      leftpwm = (int) abs(result)*1.3;
+      rightpwm = (int) abs(result);
 
-    } else if (result > -5){
-      backward_slow(rightpwm, leftpwm);
-      // backward(leftpwm,rightpwm);
-
-    }
+      if(result < 5){
+        forward_slow(rightpwm, leftpwm);
+      } 
+      else if (result > -5){
+        backward_slow(rightpwm, leftpwm);
+      }
       else forward(0, 0);
 
       Serial.print(theta_n);
@@ -198,28 +219,19 @@ void loop() {
       Serial.print("\t");
       Serial.print(rightpwm);
       Serial.print("\t");
-      // Serial.print(proportional);
-      // Serial.print("\t");
-      // Serial.print(derivative);
-      // Serial.print("\t");
-      Serial.print(integral);
-      Serial.print("\t");
-      // Serial.print(dt,5);
-      // Serial.print("\t");
       Serial.print(Kp);
       Serial.print("\t");
       Serial.print(Ki);
       Serial.print("\t");
       Serial.print(Kd);
       Serial.print("\t");
-      Serial.println(result);
-     
-
-
-
-      // Check if the characteristic was written
+      Serial.print(result);
+      Serial.print("\t");
+      Serial.println(current_rpm);
+      
+        // Check if the characteristic was written
       if (customCharacteristic.written()) {
-       // Get the length of the received data
+        // Get the length of the received data
         int length = customCharacteristic.valueLength();
 
         // Read the received data
@@ -258,31 +270,18 @@ void loop() {
   old_theta_n = theta_n; 
   theta_n = getAngle(old_theta_n); // angles 
     
-
-   // float currentAngleMotor = as5600.readAngle() * (360.0 / 4096.0);  // Convert raw to degrees
-
+  current_rpm = as5600.getAngularSpeed(AS5600_MODE_RPM);
     
-    // Run the PID controller
-      float result = PID(setpoint, theta_n); // targe value = 0, current value = theta_n, pid output
-      // float motorOutput = constrain(map(abs(result),0,1000,50,255),50,255); // pwm output
-      // result = constrain(result, -500, 500);
-      // float motorOutput = map(result, -1000, 1000, -255, 255);
+  // Run the PID controller
+  result = PID(setpoint, theta_n); // targe value = 0, current value = theta_n, pid output
 
+  leftpwm = (int) abs(result)*1.3;
+  rightpwm = (int) abs(result);
       
-      leftpwm = (int) abs(result)*1.3;
-      rightpwm = (int) abs(result);
-
-      //given left pwm = 7.58 * exp(7.89E-3 * rpm), we can calculate rpm from pwm
-      float leftrpm = log(leftpwm/7.58)/7.89E-3; 
-      float rightpwm1 = 8.33 * exp(7.55E-3 * leftrpm);
     if(result < 5){
       forward_slow(rightpwm, leftpwm);
-      // forward(leftpwm,rightpwm);
-
     } else if (result > -5){
       backward_slow(rightpwm, leftpwm);
-      // backward(leftpwm,rightpwm);
-
     }
       else forward(0, 0);
 
@@ -292,14 +291,6 @@ void loop() {
       Serial.print("\t");
       Serial.print(rightpwm);
       Serial.print("\t");
-      // Serial.print(proportional);
-      // Serial.print("\t");
-      // Serial.print(derivative);
-      // Serial.print("\t");
-      Serial.print(integral);
-      Serial.print("\t");
-      // Serial.print(dt,5);
-      // Serial.print("\t");
       Serial.print(Kp);
       Serial.print("\t");
       Serial.print(Ki);
