@@ -49,7 +49,8 @@ void setup()
     Serial.println("camera starting");
     Serial.print("http://");
     Serial.println(WiFi.localIP());
-    
+    Serial.print("/jpeg");
+
     addRequestHandlers();
     server.begin();
 }
