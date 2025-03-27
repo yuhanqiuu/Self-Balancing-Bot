@@ -159,26 +159,39 @@ void loop() {
     // Keep running while connected
     while (central.connected()) {
 
-      // get angle and pid output
-      theta_n = getAngle(theta_n); 
+      keyboard_test();
 
-      float motorOutput = PID(0, theta_n); 
-      int leftpwm;
-      int rightpwm;
+    theta_n = getAngle(old_theta_n); // angles 
+    old_theta_n = theta_n;
+    int leftpwm;
+    int rightpwm;
+   // float currentAngleMotor = as5600.readAngle() * (360.0 / 4096.0);  // Convert raw to degrees
 
-      // Run the PID controller
-      float result = PID(0, theta_n); // target value = 0, current value = theta_n, pid output
+    
+    // Run the PID controller
+      float result = PID(0, theta_n); // targe value = 0, current value = theta_n, pid output
+      // float motorOutput = constrain(map(abs(result),0,1000,50,255),50,255); // pwm output
+      // result = constrain(result, -500, 500);
+      // float motorOutput = map(result, -1000, 1000, -255, 255);
 
-      leftpwm = (int) abs(result * 1.3);
+      
+      leftpwm = (int) abs(result)*1.3;
       rightpwm = (int) abs(result);
 
-      if (result < 5) {
-        forward_slow(leftpwm, rightpwm);
-      } else if (result > -5) {
-        backward_slow(leftpwm, rightpwm);
-      } else {
-        forward(0, 0);
-      }
+      //given left pwm = 7.58 * exp(7.89E-3 * rpm), we can calculate rpm from pwm
+      float leftrpm = log(leftpwm/7.58)/7.89E-3; 
+      float rightpwm1 = 8.33 * exp(7.55E-3 * leftrpm);
+    if(result < 5){
+      forward_slow(rightpwm, leftpwm);
+      // forward(leftpwm,rightpwm);
+
+    } else if (result > -5){
+      backward_slow(rightpwm, leftpwm);
+      // backward(leftpwm,rightpwm);
+
+    }
+      else forward(0, 0);
+
       Serial.print(dt,5);
       Serial.print("\t");
       Serial.println("not broken");
