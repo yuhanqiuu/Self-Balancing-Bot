@@ -11,9 +11,9 @@ float old_theta_n = 0;
 String input;
 int task = 0;
 
-float Kp = 18;          // (P)roportional Tuning Parameter 12-14?
-float Ki = 8;          // (I)ntegral Tuning Parameter        
-float Kd = 1.5;          // (D)erivative Tuning Parameter   1049
+float Kp = 15;          // (P)roportional Tuning Parameter 12-14? 18
+float Ki = 8;          // (I)ntegral Tuning Parameter        8
+float Kd = 5;          // (D)erivative Tuning Parameter   2
 float K_mast = 1.0;
     
 // PID Variables
@@ -150,6 +150,9 @@ void setup() {
 void loop() {
   // Wait for a BLE central to connect
   BLEDevice central = BLE.central();
+  int leftpwm;
+  int rightpwm;
+
 
   if (central) {
     Serial.print("Connected to central: ");
@@ -158,13 +161,11 @@ void loop() {
 
     // Keep running while connected
     while (central.connected()) {
+    keyboard_test();
 
-      keyboard_test();
 
     theta_n = getAngle(old_theta_n); // angles 
     old_theta_n = theta_n;
-    int leftpwm;
-    int rightpwm;
    // float currentAngleMotor = as5600.readAngle() * (360.0 / 4096.0);  // Convert raw to degrees
 
     
@@ -175,12 +176,12 @@ void loop() {
       // float motorOutput = map(result, -1000, 1000, -255, 255);
 
       
-      leftpwm = (int) abs(result)*1.3;
-      rightpwm = (int) abs(result);
+    leftpwm = (int) abs(result)*1.3;
+    rightpwm = (int) abs(result);
 
       //given left pwm = 7.58 * exp(7.89E-3 * rpm), we can calculate rpm from pwm
-      float leftrpm = log(leftpwm/7.58)/7.89E-3; 
-      float rightpwm1 = 8.33 * exp(7.55E-3 * leftrpm);
+      // leftrpm = log(leftpwm/7.58)/7.89E-3; 
+      // rightpwm1 = 8.33 * exp(7.55E-3 * leftrpm);
     if(result < 5){
       forward_slow(rightpwm, leftpwm);
       // forward(leftpwm,rightpwm);
@@ -192,9 +193,29 @@ void loop() {
     }
       else forward(0, 0);
 
-      Serial.print(dt,5);
+      Serial.print(theta_n);
       Serial.print("\t");
-      Serial.println("not broken");
+      Serial.print(leftpwm);
+      Serial.print("\t");
+      Serial.print(rightpwm);
+      Serial.print("\t");
+      // Serial.print(proportional);
+      // Serial.print("\t");
+      // Serial.print(derivative);
+      // Serial.print("\t");
+      Serial.print(integral);
+      Serial.print("\t");
+      // Serial.print(dt,5);
+      // Serial.print("\t");
+      Serial.print(Kp);
+      Serial.print("\t");
+      Serial.print(Ki);
+      Serial.print("\t");
+      Serial.print(Kd);
+      Serial.print("\t");
+      Serial.println(result);
+     
+
 
 
       // Check if the characteristic was written
@@ -233,4 +254,57 @@ void loop() {
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     Serial.println("Disconnected from central.");
   }
+
+    theta_n = getAngle(old_theta_n); // angles 
+    old_theta_n = theta_n;
+    
+   // float currentAngleMotor = as5600.readAngle() * (360.0 / 4096.0);  // Convert raw to degrees
+
+    
+    // Run the PID controller
+      float result = PID(0, theta_n); // targe value = 0, current value = theta_n, pid output
+      // float motorOutput = constrain(map(abs(result),0,1000,50,255),50,255); // pwm output
+      // result = constrain(result, -500, 500);
+      // float motorOutput = map(result, -1000, 1000, -255, 255);
+
+      
+      leftpwm = (int) abs(result)*1.3;
+      rightpwm = (int) abs(result);
+
+      //given left pwm = 7.58 * exp(7.89E-3 * rpm), we can calculate rpm from pwm
+      float leftrpm = log(leftpwm/7.58)/7.89E-3; 
+      float rightpwm1 = 8.33 * exp(7.55E-3 * leftrpm);
+    if(result < 5){
+      forward_slow(rightpwm, leftpwm);
+      // forward(leftpwm,rightpwm);
+
+    } else if (result > -5){
+      backward_slow(rightpwm, leftpwm);
+      // backward(leftpwm,rightpwm);
+
+    }
+      else forward(0, 0);
+
+      Serial.print(theta_n);
+      Serial.print("\t");
+      Serial.print(leftpwm);
+      Serial.print("\t");
+      Serial.print(rightpwm);
+      Serial.print("\t");
+      // Serial.print(proportional);
+      // Serial.print("\t");
+      // Serial.print(derivative);
+      // Serial.print("\t");
+      Serial.print(integral);
+      Serial.print("\t");
+      // Serial.print(dt,5);
+      // Serial.print("\t");
+      Serial.print(Kp);
+      Serial.print("\t");
+      Serial.print(Ki);
+      Serial.print("\t");
+      Serial.print(Kd);
+      Serial.print("\t");
+      Serial.println(result);
+
 }
