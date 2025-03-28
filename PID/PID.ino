@@ -62,7 +62,6 @@ float PID(float setpoint, float currentValue){
   if (dt <= 0) dt = 1e-3; // Prevent division by zero
 
   proportional = Kp * error;
-
   integral += dt * error;
   integral = constrain(integral, -30, 30);  // Example limit
 
