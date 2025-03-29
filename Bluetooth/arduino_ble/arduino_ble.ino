@@ -15,9 +15,9 @@ float old_theta_n = 0;
 String input;
 int task = 0;
 
-float Kp = 18;          // (P)roportional Tuning Parameter 12-14? 18
-float Ki = 0;          // (I)ntegral Tuning Parameter        8
-float Kd = 0.6;          // (D)erivative Tuning Parameter   0.6
+float Kp = 20;          // (P)roportional Tuning Parameter 12-14? 18
+float Ki = 100;          // (I)ntegral Tuning Parameter        8
+float Kd = 0.7;          // (D)erivative Tuning Parameter   0.6
 float K_mast = 1.0;
     
 // PID Variables
@@ -29,13 +29,19 @@ unsigned long lastTime = 0;
 float dt = 0;
 unsigned long currentTime = 0;
 
+// Encoder Setup
+AS5600 as5600;
+float rpm = 0;
+float previousAngle = 0;
+
+// Desired Setpoint
+float setpoint_speed = 0;  // We want the wheel to stay stationary
+
 
 float theta_n = 0;     // current angle inputs???
 float pidOutput = 0;   // PID output
-float setpoint = 0;
+float setpoint = -1.75;
 
-// AS5600
-AS5600 as5600;   //  use default Wire
 
 //-------------------------------------------------------------------------
 
@@ -58,7 +64,7 @@ float PID(float setpoint, float currentValue)
   proportional = Kp * error;
 
   integral += Ki * dt * error;
-  integral = constrain(integral, -30, 30); // Example limit
+  integral = constrain(integral, -255, 255); // Example limit
 
   // Derivative term (rate of change of error)
   derivative = (error - previousError) / dt;
@@ -69,7 +75,7 @@ float PID(float setpoint, float currentValue)
     derivative = 0; // filters out noise
   }
 
-  output = constrain(K_mast * (proportional + integral + derivative), -230.0, 230.0); // computes sum of error
+  output = constrain(K_mast * (proportional + integral + derivative), -255.0, 255.0); // computes sum of error
   // output = constrain(output, -1000, 1000);  // limits output of PID to limits of PWM
 
   previousError = error; // update the previous error
@@ -104,6 +110,10 @@ void keyboard_test(void)
   {
     integral = 0;
   }
+  else if (input == "s")
+  {
+    task = 4;
+  }
 
   switch (task)
   {
@@ -119,14 +129,19 @@ void keyboard_test(void)
     if (input == "0" || input.toFloat() > 0)
       Kd = input.toFloat();
     break;
+  case 4:
+    if (input == "0"||input.toFloat() != 0)
+      setpoint = input.toFloat();
+    break;
   }
 }
 
 //-------------------------------------------------------------------------
 
 void setup() {
-  // Serial.begin(9600);
-  // while (!Serial);
+  Serial.begin(9600);
+  while (!Serial);
+  Serial.setTimeout(10);
 
   // Initialize IMU for self-balancing
   if (!IMU.begin()) {
@@ -138,6 +153,11 @@ void setup() {
   // while(!Serial);
   // Serial.begin(115200);
   Wire.begin();
+
+  if (!as5600.begin()) {
+      Serial.println("Failed to initialize AS5600 encoder!");
+      while (1);
+  }
 
   as5600.begin(4);  //  set direction pin.
   as5600.setDirection(AS5600_CLOCK_WISE);  //  default, just be explicit.
@@ -202,32 +222,34 @@ void loop() {
       result = PID(setpoint, theta_n); // targe value = 0, current value = theta_n, pid output
 
         
-      leftpwm = (int) abs(result)*1.3;
-      rightpwm = (int) abs(result);
+      // leftpwm = map(abs(result)*1.2,0,255,0,255);
+      // rightpwm = map(abs(result),0,255,0,255);
 
-      if(result < 5){
+      if(result < 0){
         forward_slow(rightpwm, leftpwm);
       } 
-      else if (result > -5){
+      else if (result > 0){
         backward_slow(rightpwm, leftpwm);
       }
       else forward(0, 0);
 
       Serial.print(theta_n);
       Serial.print("\t");
-      Serial.print(leftpwm);
+      Serial.print(setpoint);
       Serial.print("\t");
-      Serial.print(rightpwm);
-      Serial.print("\t");
+      // Serial.print(leftpwm);
+      // Serial.print("\t");
+      // Serial.print(rightpwm);
+      // Serial.print("\t");
       Serial.print(Kp);
       Serial.print("\t");
       Serial.print(Ki);
       Serial.print("\t");
-      Serial.print(Kd);
-      Serial.print("\t");
-      Serial.print(result);
-      Serial.print("\t");
-      Serial.println(current_rpm);
+      Serial.println(Kd);
+      // Serial.print("\t");
+      // Serial.print(result);
+      // Serial.print("\t");
+      // Serial.println(current_rpm);
       
         // Check if the characteristic was written
       if (customCharacteristic.written()) {
@@ -275,17 +297,25 @@ void loop() {
   // Run the PID controller
   result = PID(setpoint, theta_n); // targe value = 0, current value = theta_n, pid output
 
-  leftpwm = (int) abs(result)*1.3;
-  rightpwm = (int) abs(result);
+  leftpwm = abs(result)*1.2;
+  rightpwm = abs(result);
+
+  // leftpwm = map(constrain(abs(result)*1.2,0, 255),0,255,0,250);
+  // rightpwm = map(abs(result),0,255,0,250);
       
-    if(result < 5){
+      
+    if(result < 0){
       forward_slow(rightpwm, leftpwm);
-    } else if (result > -5){
+    } else if (result > -0){
       backward_slow(rightpwm, leftpwm);
     }
       else forward(0, 0);
 
       Serial.print(theta_n);
+      Serial.print("\t");
+      Serial.print(setpoint);
+      Serial.print("\t");
+      Serial.print(integral);
       Serial.print("\t");
       Serial.print(leftpwm);
       Serial.print("\t");
@@ -298,5 +328,7 @@ void loop() {
       Serial.print(Kd);
       Serial.print("\t");
       Serial.println(result);
+      // Serial.print("\t");
+      // Serial.println(current_rpm);
 
 }

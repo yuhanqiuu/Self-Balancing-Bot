@@ -60,15 +60,22 @@ void rfw_lbw(int pwm1, int pwm2){
   }
 
   // slow decay
-void backward_slow(int pwm1, int pwm2){
-    analogWrite(AIN2, pwm1);   
+void forward_slow(int pwm1, int pwm2){
+    // analogWrite(AIN1, 255);
+    pwm1 = map(pwm1,0,255,220,0);   
+    pwm2 = map(pwm2,0,255,220,0);  
     digitalWrite(AIN1, HIGH); 
+    analogWrite(AIN2, pwm2); 
   
+    // analogWrite(BIN1, 255); 
     analogWrite(BIN2, pwm2); 
     digitalWrite(BIN1, HIGH); 
   }
   
-  void forward_slow(int pwm1, int pwm2) {  
+  void backward_slow(int pwm1, int pwm2) {
+
+    pwm1 = map(pwm1,0,255,220,0);   
+    pwm2 = map(pwm2,0,255,220,0);  
       digitalWrite(AIN2, HIGH);   
       analogWrite(AIN1, pwm1);
   
