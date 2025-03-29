@@ -100,10 +100,6 @@ float speed_PID(float setpoint_speed, float current_speed) {
   return constrain(Kp_speed * speed_error + Ki_speed * integral_speed + Kd_speed * derivative_speed, -230, 230);
 }
 
-
-
-
-
 void loop() { 
     // Read encoder angle
     keyboard_test();

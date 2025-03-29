@@ -1,9 +1,9 @@
 #include "Arduino_BMI270_BMM150.h"
 #include <math.h>
 #include <PID_v1.h>
-#include "movement.h"
 #include "AS5600.h"
 #include <ArduinoBLE.h>
+#include "movement.h"
 
 #define BUFFER_SIZE 20
 
@@ -147,20 +147,20 @@ void setup()
 
     // ------------------------- AS5600 Setup -------------------------
 
-    Wire.begin(); // Initialize I2C
-    if (!as5600.begin())
-    {
-        Serial.println("Failed to initialize AS5600 encoder!");
-        while (1);
-    } // Error message of AS5600
+    // Wire.begin(); // Initialize I2C
+    // if (!as5600.begin())
+    // {
+    //     Serial.println("Failed to initialize AS5600 encoder!");
+    //     while (1);
+    // } // Error message of AS5600
 
-    as5600.begin(4);                        //  set direction pin.
-    as5600.setDirection(AS5600_CLOCK_WISE); //  default, just be explicit.
+    // as5600.begin(4);                        //  set direction pin.
+    // as5600.setDirection(AS5600_CLOCK_WISE); //  default, just be explicit.
 
-    Serial.println(as5600.getAddress()); // Check Initialization
-    int b = as5600.isConnected();
-    if (b) Serial.print("Connect: ");
-    else Serial.println(b);
+    // Serial.println(as5600.getAddress()); // Check Initialization
+    // int b = as5600.isConnected();
+    // if (b) Serial.print("Connect: ");
+    // else Serial.println(b);
 
     // -------------------------------------------------------------------
 

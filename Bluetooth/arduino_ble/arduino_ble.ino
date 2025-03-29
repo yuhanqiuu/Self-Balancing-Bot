@@ -15,9 +15,9 @@ float old_theta_n = 0;
 String input;
 int task = 0;
 
-float Kp = 20;          // (P)roportional Tuning Parameter 12-14? 33
-float Ki = 100;          // (I)ntegral Tuning Parameter        78
-float Kd = 0.7;          // (D)erivative Tuning Parameter   0.77
+float Kp = 33;          // (P)roportional Tuning Parameter 12-14? 33
+float Ki = 78;          // (I)ntegral Tuning Parameter        78
+float Kd = 0.77;          // (D)erivative Tuning Parameter   0.77
 float K_mast = 1.0;
     
 // PID Variables
@@ -221,18 +221,6 @@ void loop() {
       // Run the PID controller
       result = PID(setpoint, theta_n); // targe value = 0, current value = theta_n, pid output
 
-        
-      // leftpwm = map(abs(result)*1.2,0,255,0,255);
-      // rightpwm = map(abs(result),0,255,0,255);
-
-      if(result < 0){
-        forward_slow(rightpwm, leftpwm);
-      } 
-      else if (result > 0){
-        backward_slow(rightpwm, leftpwm);
-      }
-      else forward(0, 0);
-
       Serial.print(theta_n);
       Serial.print("\t");
       Serial.print(setpoint);
@@ -266,26 +254,48 @@ void loop() {
 
         if (strcmp(receivedString, "W") == 0) {
           Serial.println("W");
-          setpoint = 1; // setpoint for PID for forward, 1 degree
+          setpoint = 2-1.75; // setpoint for PID for forward, 2 degree
+          leftpwm = abs(result)*1.2;
+          rightpwm = abs(result);
         } 
         else if (strcmp(receivedString, "S") == 0) {
           Serial.println("S");
-          setpoint = -1; // setpoint for PID for backward, 1 degree
+          setpoint = -2-1.75; // setpoint for PID for backward, 2 degree
+          leftpwm = abs(result)*1.2;
+          rightpwm = abs(result);
         } 
         else if (strcmp(receivedString, "A") == 0) { // left
           Serial.println("A");
-          rfw_lbw(leftpwm, rightpwm);
+          
+          // do we run two motors in different direction or scale them for turning?
+          // rfw_lbw(leftpwm, rightpwm); 
+          leftpwm = result * 0.5 * 1.2;
+          rightpwm = result;
         } 
         else if (strcmp(receivedString, "D") == 0) { // right
           Serial.println("D");
-          lfw_rbw(leftpwm, rightpwm);
+          // lfw_rbw(leftpwm, rightpwm);
+          leftpwm = result * 1.2;
+          rightpwm = result * 0.5;
         }
 
+      // leftpwm = map(abs(result)*1.2,0,255,0,255);
+      // rightpwm = map(abs(result),0,255,0,255);
+
+      if(result < 0){
+        forward_slow(rightpwm, leftpwm);
+      } 
+      else if (result > 0){
+        backward_slow(rightpwm, leftpwm);
+      }
+      else forward(0, 0);
       }
     }
 
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     Serial.println("Disconnected from central.");
+
+
   }
 
   keyboard_test();

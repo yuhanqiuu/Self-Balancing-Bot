@@ -7,8 +7,6 @@
 #define AIN2 3
 #define BIN2 4
 #define BIN1 5
-#define ARD_SDA 8
-#define ARD_SCL 9
 
 // Function declarations
 float rpm_to_pwm_left(float rpm);
