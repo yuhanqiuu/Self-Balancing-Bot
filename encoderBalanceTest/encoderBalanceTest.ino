@@ -31,31 +31,6 @@ unsigned long lastTime = 0;
 // Desired Setpoint
 float setpoint_speed = 0;  // We want the wheel to stay stationary
 
-void setup() {
-    //Serial.begin(115200);
-    Wire.begin();
-
-    if (!encoder.begin()) {
-        Serial.println("Failed to initialize AS5600 encoder!");
-        while (1);
-    }
-
-    lastTime = micros();
-}
-
-float speed_PID(float setpoint_speed, float current_speed) {
-  float output = 0;
-  dt = (float) (micros() - currentTime) / 1000000.0;  // gets time for ∆t
-  currentTime = micros();  // sets new current time
-
-  float speed_error = setpoint_speed - current_speed;
-  integral_speed += speed_error * dt;
-  derivative_speed = (speed_error - previous_speed_error) / dt;
-  previous_speed_error = speed_error;
-  
-  return constrain(Kp_speed * speed_error + Ki_speed * integral_speed + Kd_speed * derivative_speed, -230, 230);
-}
-
 void keyboard_test(void)
 {
 
@@ -99,6 +74,33 @@ void keyboard_test(void)
     break;
   }
 }
+
+void setup() {
+    //Serial.begin(115200);
+    Wire.begin();
+
+    if (!encoder.begin()) {
+        Serial.println("Failed to initialize AS5600 encoder!");
+        while (1);
+    }
+
+    lastTime = micros();
+}
+
+float speed_PID(float setpoint_speed, float current_speed) {
+  float output = 0;
+  dt = (float) (micros() - currentTime) / 1000000.0;  // gets time for ∆t
+  currentTime = micros();  // sets new current time
+
+  float speed_error = setpoint_speed - current_speed;
+  integral_speed += speed_error * dt;
+  derivative_speed = (speed_error - previous_speed_error) / dt;
+  previous_speed_error = speed_error;
+  
+  return constrain(Kp_speed * speed_error + Ki_speed * integral_speed + Kd_speed * derivative_speed, -230, 230);
+}
+
+
 
 
 
