@@ -1,7 +1,7 @@
 #include "Arduino_BMI270_BMM150.h"
 #include <math.h>
 #include <PID_v1.h>
-#include "AS5600.h"
+#include <AS5600.h>
 #include <ArduinoBLE.h>
 #include "movement.h"
 #include <Wire.h>
@@ -18,8 +18,8 @@ int task = 0;
 //-------------------------------------------------------------------------
 
 // Angle PID parameters
-float Kp = 19;  // (P)roportional Tuning Parameter 12-14? 18
-float Ki = 7.5; // (I)ntegral Tuning Parameter        8
+float Kp = 5;  // (P)roportional Tuning Parameter 12-14? 18
+float Ki = 0; // (I)ntegral Tuning Parameter        8
 float Kd = 0.6; // (D)erivative Tuning Parameter   0.6
 float K_mast = 1.0;
 
@@ -33,12 +33,21 @@ unsigned long currentTime = 0;
 
 float old_theta_n = 0;
 float theta_n = 0;
-float setpoint = -1.55;
+float setpoint = 0;
 
 //-------------------------------------------------------------------------
 
 // Position Control Parameters
+AS5600 encoder;
 int32_t targetPosition = 0; // Desired cumulative ticks
+int32_t currentPosition = 0; // From AS5600
+int32_t positionError = 0;
+float positionIntegral = 0;
+
+float Kp_pos = 0.001;  // Start small, tune upward
+float Ki_pos = 0.00001; // Prevent slow drift
+
+float maxTilt = 5.0; // degrees max tilt allowed by position controller
 
 //-------------------------------------------------------------------------
 
@@ -54,6 +63,8 @@ float PID(float setpoint, float currentValue)
 {
     float output = 0;
     dt = (float)(micros() - currentTime) / 1000000.0; // gets time for ∆t
+    if (dt <= 0 || dt > 0.2)
+        dt = 0.01; // clamp for safety
     currentTime = micros();                           // sets new current time
 
     float error = setpoint - currentValue;
@@ -154,19 +165,13 @@ void setup()
     // ------------------------- AS5600 Setup -------------------------
 
     Wire.begin(); // Initialize I2C
-    if (!as5600.begin())
+    if (!encoder.begin())
     {
         Serial.println("Failed to initialize AS5600 encoder!");
         while (1);
     } // Error message of AS5600
 
-    // as5600.begin(4);                        //  set direction pin.
-    // as5600.setDirection(AS5600_CLOCK_WISE); //  default, just be explicit.
-
-    // Serial.println(as5600.getAddress()); // Check Initialization
-    // int b = as5600.isConnected();
-    // if (b) Serial.print("Connect: ");
-    // else Serial.println(b);
+    targetPosition = encoder.getCumulativePosition(true); 
 
     // -------------------------------------------------------------------
 
@@ -189,7 +194,6 @@ void setup()
     BLE.advertise();
     Serial.println("Bluetooth® device active, waiting for connections...");
 
-    // -------------------------------------------------------------------
 }
 
 //-------------------------------------------------------------------------
@@ -204,7 +208,6 @@ void loop()
 
     if (central)
     {
-
         // Check central connection
         Serial.print("Connected to central: ");
         Serial.println(central.address());
@@ -215,6 +218,15 @@ void loop()
         {
 
             keyboard_test();
+            // ------------------------- Speed Controller -----------------------------
+
+            currentPosition = encoder.getCumulativePosition(true); // Get current position
+            positionError = targetPosition - currentPosition;
+            positionIntegral += positionError * dt;
+            positionIntegral = constrain(positionIntegral, -10000, 10000); // Prevent windup
+
+            // Generate desired tilt angle (setpoint) in degrees
+            setpoint = Kp_pos * positionError + Ki_pos * positionIntegral;
 
             // ------------------------- Angle PID Controller -------------------------
             old_theta_n = theta_n;
@@ -235,6 +247,8 @@ void loop()
             else
                 forward(0, 0);
 
+            Serial.print(setpoint);
+            Serial.print("\t");
             Serial.print(theta_n);
             Serial.print("\t");
             Serial.print(setpoint);
@@ -252,14 +266,6 @@ void loop()
             Serial.print(Kd);
             Serial.print("\t");
             Serial.println(result); // ends the line
-
-            // ------------------------------------------------------------------------
-
-            // ------------------------- Speed Controller -----------------------------
-
-            targetPosition = as5600.getCumulativePosition(true); // Lock in starting point
-
-            // ------------------------------------------------------------------------
 
             // ------------------------- Bluetooth Controller -------------------------
             if (customCharacteristic.written())
@@ -292,12 +298,18 @@ void loop()
                     lfw_rbw(leftpwm, rightpwm);
                 }
             }
-            // ------------------------------------------------------------------------
 
         } // Central Closed
     }
     else {
         keyboard_test();
+        // ------------------------- Speed Controller -----------------------------
+
+        currentPosition = encoder.getCumulativePosition(true); // Get current position
+        positionError = targetPosition - currentPosition;
+        positionIntegral += positionError * dt;
+        positionIntegral = constrain(positionIntegral, -2000, 2000); // Prevent windup
+        setpoint = constrain(Kp_pos * positionError + Ki_pos * positionIntegral, -maxTilt, maxTilt);
 
         // ------------------------- Angle PID Controller -------------------------
         old_theta_n = theta_n;
@@ -318,25 +330,26 @@ void loop()
         else
             forward(0, 0);
 
-        Serial.print(theta_n);
-        Serial.print("\t");
         Serial.print(setpoint);
         Serial.print("\t");
-        Serial.print(integral);
+        Serial.print(positionError);
         Serial.print("\t");
-        Serial.print(leftpwm);
+        Serial.println(positionIntegral);
         Serial.print("\t");
-        Serial.print(rightpwm);
-        Serial.print("\t");
-        Serial.print(Kp);
-        Serial.print("\t");
-        Serial.print(Ki);
-        Serial.print("\t");
-        Serial.print(Kd);
-        Serial.print("\t");
-        Serial.println(result); // ends the line
+        // Serial.print(theta_n);
+        // Serial.print("\t");
+        // Serial.print(integral);
+        // Serial.print("\t");
+        // Serial.print(leftpwm);
+        // Serial.print("\t");
+        // Serial.print(rightpwm);
+        // Serial.print("\t");
+        // Serial.print(Kp);
+        // Serial.print("\t");
+        // Serial.print(Ki);
+        // Serial.print("\t");
+        // Serial.print(Kd);
+        // Serial.print("\t");
+        // Serial.println(result); // ends the line
     }
-
-    digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
-    Serial.println("Disconnected");
 }
