@@ -1,3 +1,4 @@
+#include "Arduino_BMI270_BMM150.h"
 #include <math.h>
 #include <PID_v1.h>
 #include "AS5600.h"
@@ -139,17 +140,6 @@ void setup()
     }
 
     // -------------------------------------------------------------------
-
-    // LED to indicate connection status
-    pinMode(LED_BUILTIN, OUTPUT);
-    if (!BLE.begin())
-    {
-        Serial.println("Starting BLE failed!");
-        while (1)
-            ;
-    }
-
-    // -------------------------------------------------------------------
 }
 
 //-------------------------------------------------------------------------
@@ -204,9 +194,4 @@ void loop()
     Serial.println(result); // ends the line
 
     // ------------------------------------------------------------------------
-
-    // ------------------------- Speed Controller -----------------------------
-
-    digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
-    Serial.println("Disconnected from central.");
 }
