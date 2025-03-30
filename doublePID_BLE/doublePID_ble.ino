@@ -4,6 +4,7 @@
 #include "AS5600.h"
 #include <ArduinoBLE.h>
 #include "movement.h"
+#include <Wire.h>
 
 #define BUFFER_SIZE 20
 
@@ -33,6 +34,11 @@ unsigned long currentTime = 0;
 float old_theta_n = 0;
 float theta_n = 0;
 float setpoint = -1.55;
+
+//-------------------------------------------------------------------------
+
+// Position Control Parameters
+int32_t targetPosition = 0; // Desired cumulative ticks
 
 //-------------------------------------------------------------------------
 
@@ -134,8 +140,7 @@ void keyboard_test(void)
 void setup()
 {
     Serial.begin(9600);
-    while (!Serial)
-        ;
+    while (!Serial);
     Serial.setTimeout(10);
 
     // Initialize IMU for self-balancing
@@ -148,12 +153,12 @@ void setup()
 
     // ------------------------- AS5600 Setup -------------------------
 
-    // Wire.begin(); // Initialize I2C
-    // if (!as5600.begin())
-    // {
-    //     Serial.println("Failed to initialize AS5600 encoder!");
-    //     while (1);
-    // } // Error message of AS5600
+    Wire.begin(); // Initialize I2C
+    if (!as5600.begin())
+    {
+        Serial.println("Failed to initialize AS5600 encoder!");
+        while (1);
+    } // Error message of AS5600
 
     // as5600.begin(4);                        //  set direction pin.
     // as5600.setDirection(AS5600_CLOCK_WISE); //  default, just be explicit.
@@ -252,7 +257,7 @@ void loop()
 
             // ------------------------- Speed Controller -----------------------------
 
-            current_rpm = as5600.getAngularSpeed(AS5600_MODE_RPM);
+            targetPosition = as5600.getCumulativePosition(true); // Lock in starting point
 
             // ------------------------------------------------------------------------
 
@@ -291,9 +296,47 @@ void loop()
 
         } // Central Closed
     }
-    else
-        Serial.println("No central detected");
+    else {
+        keyboard_test();
+
+        // ------------------------- Angle PID Controller -------------------------
+        old_theta_n = theta_n;
+        theta_n = getAngle(old_theta_n); // angles
+        result = PID(setpoint, theta_n); // targe value = 0, current value = theta_n, pid output
+
+        leftpwm = map(abs(result) * 1.2, 0, 255, 0, 255);
+        rightpwm = map(abs(result), 0, 255, 0, 255);
+
+        if (result < 0)
+        {
+            forward_slow(rightpwm, leftpwm);
+        }
+        else if (result > 0)
+        {
+            backward_slow(rightpwm, leftpwm);
+        }
+        else
+            forward(0, 0);
+
+        Serial.print(theta_n);
+        Serial.print("\t");
+        Serial.print(setpoint);
+        Serial.print("\t");
+        Serial.print(integral);
+        Serial.print("\t");
+        Serial.print(leftpwm);
+        Serial.print("\t");
+        Serial.print(rightpwm);
+        Serial.print("\t");
+        Serial.print(Kp);
+        Serial.print("\t");
+        Serial.print(Ki);
+        Serial.print("\t");
+        Serial.print(Kd);
+        Serial.print("\t");
+        Serial.println(result); // ends the line
+    }
 
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
-    Serial.println("Disconnected from central.");
+    Serial.println("Disconnected");
 }

@@ -29,17 +29,9 @@ float previousError = 0;
 float integral = 0;
 float proportional = 0;
 float derivative = 0;
-unsigned long lastTime = 0;
+unsigned long lastTime;
 float dt = 0;
 unsigned long currentTime = 0;
-
-// Encoder Setup
-AS5600 as5600;
-float rpm = 0;
-float previousAngle = 0;
-
-// Desired Setpoint
-float setpoint_speed = 0;  // We want the wheel to stay stationary
 
 
 float theta_n = 0;     // current angle inputs???
@@ -54,8 +46,39 @@ BLEService customService("00000000-5EC4-4083-81CD-A10B8D5CF6EC");
 BLECharacteristic customCharacteristic(
     "00000001-5EC4-4083-81CD-A10B8D5CF6EC", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 
-//-------------------------------------------------------------------------
-// PID contoller
+
+float getAngle(float theta_n)
+{
+    float k = 0.95; // weighting factor
+    float x, y, z;
+    float theta_an, theta_gn = 0;
+
+
+    currentTime = micros();
+    dT = (currentTime - lastTime) / 1000000.0; 
+    lastTime = currentTime;
+
+    if (IMU.gyroscopeAvailable()) {
+        // reads gyroscope value
+        IMU.readGyroscope(x, y, z);
+        
+        // computes theta using integration
+        theta_gn = (theta_n + x * dt);
+        
+    }
+
+    if (IMU.accelerationAvailable()) {
+        // reads acceleration
+        IMU.readAcceleration(x, y, z);
+        
+        // computes theta values
+        theta_an = -degrees(atan(y / z)); 
+    }
+
+    theta_n = k * theta_gn + (1 - k) * theta_an;
+    return theta_n;
+}
+    
 
 float PID(float setpoint, float currentValue)
 {
@@ -190,6 +213,7 @@ void keyboard_test(void)
 //-------------------------------------------------------------------------
 
 void setup() {
+  // comment out the following lines for battery power supply
   Serial.begin(9600);
   while (!Serial);
   Serial.setTimeout(10);
@@ -204,25 +228,6 @@ void setup() {
     Serial.println("Failed to initialize IMU!");
     while (1);
   }
-
-  //setting up encoder
-  // while(!Serial);
-  // Serial.begin(115200);
-  Wire.begin();
-
-  if (!as5600.begin()) {
-      Serial.println("Failed to initialize AS5600 encoder!");
-      while (1);
-  }
-
-  as5600.begin(4);  //  set direction pin.
-  as5600.setDirection(AS5600_CLOCK_WISE);  //  default, just be explicit.
-
-  Serial.println(as5600.getAddress());
-
-  int b = as5600.isConnected();
-  Serial.print("Connect: ");
-  Serial.println(b);
 
   // Initialize the built-in LED to indicate connection status
   pinMode(LED_BUILTIN, OUTPUT);
@@ -249,6 +254,8 @@ void setup() {
   BLE.advertise();
 
   Serial.println("Bluetooth® device active, waiting for connections...");
+
+  lastTime = micros();
 }
 
 //-------------------------------------------------------------------------
@@ -272,7 +279,6 @@ void loop() {
 
       old_theta_n = theta_n;
       theta_n = getAngle(old_theta_n); // angles 
-      current_rpm = as5600.getAngularSpeed(AS5600_MODE_RPM);
       
       // Run the PID controller
       result = PID(setpoint, theta_n); // targe value = 0, current value = theta_n, pid output
@@ -358,8 +364,6 @@ void loop() {
   old_theta_n = theta_n; 
   theta_n = getAngle(old_theta_n); // angles 
     
-  current_rpm = as5600.getAngularSpeed(AS5600_MODE_RPM);
-  
   // Run the PID controller
   result = PID(setpoint, theta_n); // targe value = 0, current value = theta_n, pid output
 
