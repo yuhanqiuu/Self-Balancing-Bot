@@ -318,7 +318,7 @@ void loop()
         // ------------------------- Angle PID Controller -------------------------
         old_theta_n = theta_n;
         theta_n = getAngle(old_theta_n); // angles
-        result = PID(output_v+mech_zero, theta_n);
+        result = PID(output_v + mech_zero, theta_n);
 
         leftpwm = map(abs(result) * 1.2, 0, 255, 0, 255);
         rightpwm = map(abs(result), 0, 255, 0, 255);
