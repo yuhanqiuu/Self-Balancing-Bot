@@ -18,10 +18,10 @@ int task = 0;
 //-------------------------------------------------------------------------
 
 // Angle PID parameters
-float Kp = 5;  // (P)roportional Tuning Parameter 12-14? 18
-float Ki = 0; // (I)ntegral Tuning Parameter        8
+float Kp = 18;  // (P)roportional Tuning Parameter 12-14? 18
+float Ki = 8;   // (I)ntegral Tuning Parameter        8
 float Kd = 0.6; // (D)erivative Tuning Parameter   0.6
-float K_mast = 1.0;
+float K_mast = 0.18;
 
 float previousError = 0;
 float integral = 0;
@@ -39,12 +39,12 @@ float setpoint = 0;
 
 // Position Control Parameters
 AS5600 encoder;
-int32_t targetPosition = 0; // Desired cumulative ticks
+int32_t targetPosition = 0;  // Desired cumulative ticks
 int32_t currentPosition = 0; // From AS5600
 int32_t positionError = 0;
 float positionIntegral = 0;
 
-float Kp_pos = 0.001;  // Start small, tune upward
+float Kp_pos = 0.001;   // Start small, tune upward
 float Ki_pos = 0.00001; // Prevent slow drift
 
 float maxTilt = 5.0; // degrees max tilt allowed by position controller
@@ -64,8 +64,8 @@ float PID(float setpoint, float currentValue)
     float output = 0;
     dt = (float)(micros() - currentTime) / 1000000.0; // gets time for ∆t
     if (dt <= 0 || dt > 0.2)
-        dt = 0.01; // clamp for safety
-    currentTime = micros();                           // sets new current time
+        dt = 0.01;          // clamp for safety
+    currentTime = micros(); // sets new current time
 
     float error = setpoint - currentValue;
 
@@ -118,7 +118,7 @@ void keyboard_test(void)
     }
     else if (input == "reset")
     {
-        integral = 0;
+        setpoint = 0;
     }
     else if (input == "s")
     {
@@ -141,7 +141,7 @@ void keyboard_test(void)
         break;
     case 4:
         if (input == "0" || input.toFloat() != 0)
-            setpoint = input.toFloat();
+            K_mast = input.toFloat();
         break;
     }
 }
@@ -151,7 +151,8 @@ void keyboard_test(void)
 void setup()
 {
     Serial.begin(9600);
-    while (!Serial);
+    while (!Serial)
+        ;
     Serial.setTimeout(10);
 
     // Initialize IMU for self-balancing
@@ -168,10 +169,11 @@ void setup()
     if (!encoder.begin())
     {
         Serial.println("Failed to initialize AS5600 encoder!");
-        while (1);
+        while (1)
+            ;
     } // Error message of AS5600
 
-    targetPosition = encoder.getCumulativePosition(true); 
+    targetPosition = encoder.getCumulativePosition(true);
 
     // -------------------------------------------------------------------
 
@@ -193,7 +195,6 @@ void setup()
     customCharacteristic.writeValue("Waiting for data");
     BLE.advertise();
     Serial.println("Bluetooth® device active, waiting for connections...");
-
 }
 
 //-------------------------------------------------------------------------
@@ -301,7 +302,8 @@ void loop()
 
         } // Central Closed
     }
-    else {
+    else
+    {
         keyboard_test();
         // ------------------------- Speed Controller -----------------------------
 
@@ -332,6 +334,8 @@ void loop()
 
         Serial.print(setpoint);
         Serial.print("\t");
+        Serial.print(currentPosition);
+        Serial.print("\t"); 
         Serial.print(positionError);
         Serial.print("\t");
         Serial.println(positionIntegral);

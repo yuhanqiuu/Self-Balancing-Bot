@@ -3,8 +3,8 @@
 #include <math.h>
 #include "Arduino_BMI270_BMM150.h"
 
+// float theta_n = 0;
 unsigned long ct = 0;
-
 //-------------------------------------------------------------------------
 
 // Convert RPM to PWM for left and right motors
@@ -60,22 +60,15 @@ void rfw_lbw(int pwm1, int pwm2){
   }
 
   // slow decay
-void forward_slow(int pwm1, int pwm2){
-    // analogWrite(AIN1, 255);
-    pwm1 = map(pwm1,0,255,200,0);   
-    pwm2 = map(pwm2,0,255,200,0);  
+void backward_slow(int pwm1, int pwm2){
+    analogWrite(AIN2, pwm1);   
     digitalWrite(AIN1, HIGH); 
-    analogWrite(AIN2, pwm2); 
   
-    // analogWrite(BIN1, 255); 
     analogWrite(BIN2, pwm2); 
     digitalWrite(BIN1, HIGH); 
   }
   
-  void backward_slow(int pwm1, int pwm2) {
-
-    pwm1 = map(pwm1,0,255,200,0);   
-    pwm2 = map(pwm2,0,255,200,0);  
+  void forward_slow(int pwm1, int pwm2) {  
       digitalWrite(AIN2, HIGH);   
       analogWrite(AIN1, pwm1);
   
@@ -94,6 +87,7 @@ void forward_slow(int pwm1, int pwm2){
     analogWrite(BIN1, pwm2);
     digitalWrite(BIN2, HIGH);
   
+   
   }
   
   //right foward, left backward
@@ -128,29 +122,44 @@ void goLeft() {
 float getAngle(float theta_n)
 {
     float k = 0.95; // weighting factor
+    float x, y, z;
     float theta_an, theta_gn = 0;
-    float gx, gy, gz, ax, ay, az;
+
 
     float dt = (float) (micros() - ct) / 1000000;  // gets time for ∆t
     ct = micros();  // sets new current time
+    
+    // if (IMU.accelerationAvailable())
+    // {
+    //     IMU.readAcceleration(x, y, z);
+    //     theta_an = atan(y / z) * 180 / M_PI; // might need to change the axis later
+    // }
+
+    // if (IMU.gyroscopeAvailable())
+    // {
+    //     IMU.readGyroscope(x, y, z);
+    //     theta_gn += x * (1 / IMU.gyroscopeSampleRate());
+    // }
 
     if (IMU.gyroscopeAvailable()) {
         // reads gyroscope value
-        IMU.readGyroscope(gx, gy, gz);
+        IMU.readGyroscope(x, y, z);
         
         // computes theta using integration
-        theta_gn = (theta_n + gx * dt);
+        theta_gn = (theta_n + x * dt);
         
     }
 
     if (IMU.accelerationAvailable()) {
         // reads acceleration
-        IMU.readAcceleration(ax, ay, az);
+        IMU.readAcceleration(x, y, z);
         
         // computes theta values
-        theta_an = -degrees(atan(ay / az)); 
+        theta_an = -degrees(atan(y / z)); 
     }
 
     theta_n = k * theta_gn + (1 - k) * theta_an;
     return theta_n;
 }
+
+//-------------------------------------------------------------------------
