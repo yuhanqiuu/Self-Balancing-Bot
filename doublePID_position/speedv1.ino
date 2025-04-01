@@ -45,8 +45,8 @@ int32_t currentSpeed = 0; // From AS5600
 int32_t speedError = 0;
 float speedIntegral = 0;
 
-float Kp_v = 0.1;   // Start small, tune upward
-float Ki_v = Ki_v/200.0; // Prevent slow drift
+float Kp_v = 0.1;          // Start small, tune upward
+float Ki_v = Ki_v / 200.0; // Prevent slow drift
 
 float maxTilt = 5;
 float PWM_v = 0;
@@ -112,14 +112,17 @@ float PID_speed(int32_t encoder_left, int32_t encoder_right)
     Encoder_Integral += Encoder;
 
     // Integral windup guard
-    if (Encoder_Integral > 8000) Encoder_Integral = 8000;
-    if (Encoder_Integral < -6000) Encoder_Integral = -6000;
+    if (Encoder_Integral > 8000)
+        Encoder_Integral = 8000;
+    if (Encoder_Integral < -6000)
+        Encoder_Integral = -6000;
 
     // PI controller
     pwm_speed = Kp_v * Encoder + Kp_v * Encoder_Integral;
 
-    if (maxTilt == 5) {
-      Encoder_Integral = 0;
+    if (maxTilt == 5)
+    {
+        Encoder_Integral = 0;
     }
 
     return pwm_speed;
