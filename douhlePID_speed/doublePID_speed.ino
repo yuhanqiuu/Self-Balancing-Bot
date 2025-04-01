@@ -21,7 +21,7 @@ int task = 0;
 float Kp = 18;  // (P)roportional Tuning Parameter 12-14? 18
 float Ki = 8;   // (I)ntegral Tuning Parameter        8
 float Kd = 0.6; // (D)erivative Tuning Parameter   0.6
-float K_mast = 1;
+float K_mast = 0.6;
 
 float previousError = 0;
 float integral = 0;
@@ -46,7 +46,7 @@ int32_t speedError = 0;
 float speedIntegral = 0;
 
 float Kp_v = 0.1;   // Start small, tune upward
-float Ki_v = 0.001; // Prevent slow drift
+float Ki_v = Ki_v/200.0; // Prevent slow drift
 
 float maxTilt = 5;
 float PWM_v = 0;
@@ -97,6 +97,36 @@ float PID(float setpoint, float currentValue)
 
 //-------------------------------------------------------------------------
 
+// Speed PID controller
+float PID_speed(int32_t encoder_left, int32_t encoder_right)
+{
+    float pwm_speed;
+    float Encoder_Least, Encoder;
+    float Encoder_Integral;
+
+    Encoder_Least = (encoder_left + encoder_right) - Movement; // movement is target speed = 0
+
+    Encoder *= 0.6;
+    Encoder += Encoder_Least * 0.2;
+
+    Encoder_Integral += Encoder;
+
+    // Integral windup guard
+    if (Encoder_Integral > 8000) Encoder_Integral = 8000;
+    if (Encoder_Integral < -6000) Encoder_Integral = -6000;
+
+    // PI controller
+    pwm_speed = Kp_v * Encoder + Kp_v * Encoder_Integral;
+
+    if (maxTilt == 5) {
+      Encoder_Integral = 0;
+    }
+
+    return pwm_speed;
+}
+
+//-------------------------------------------------------------------------
+
 // Keyboard Input PID values
 void keyboard_test(void)
 {
@@ -128,6 +158,14 @@ void keyboard_test(void)
     {
         task = 4;
     }
+    else if (input == "kpv")
+    {
+        task = 5;
+    }
+    else if (input == "kiv")
+    {
+        task = 6;
+    }
 
     switch (task)
     {
@@ -146,6 +184,14 @@ void keyboard_test(void)
     case 4:
         if (input == "0" || input.toFloat() != 0)
             K_mast = input.toFloat();
+        break;
+    case 5:
+        if (input == "0" || input.toFloat() > 0)
+            Kp_v = input.toFloat();
+        break;
+    case 6:
+        if (input == "0" || input.toFloat() > 0)
+            Ki_v = input.toFloat();
         break;
     }
 }
@@ -252,23 +298,27 @@ void loop()
             Serial.print("\t");
             Serial.print(speedError);
             Serial.print("\t");
-            Serial.println(speedIntegral);
+            Serial.print(speedIntegral);
 
-            // Serial.print(theta_n);
-            // Serial.print("\t");
+            Serial.print(theta_n);
+            Serial.print("\t");
             // Serial.print(integral);
             // Serial.print("\t");
             // Serial.print(leftpwm);
             // Serial.print("\t");
             // Serial.print(rightpwm);
             // Serial.print("\t");
-            // Serial.print(Kp);
-            // Serial.print("\t");
-            // Serial.print(Ki);
-            // Serial.print("\t");
-            // Serial.print(Kd);
-            // Serial.print("\t");
-            // Serial.println(result); // ends the line
+            Serial.print(Kp);
+            Serial.print("\t");
+            Serial.print(Ki);
+            Serial.print("\t");
+            Serial.print(Kd);
+            Serial.print("\t");
+            Serial.print(Kp_v);
+            Serial.print("\t");
+            Serial.print(Ki_v);
+            Serial.print("\t");
+            Serial.println(result); // ends the line
 
             // ------------------------- Bluetooth Controller -------------------------
             if (customCharacteristic.written())
@@ -338,22 +388,26 @@ void loop()
         Serial.print("\t");
         Serial.print(speedError);
         Serial.print("\t");
-        Serial.println(speedIntegral);
-
-        // Serial.print(theta_n);
-        // Serial.print("\t");
+        Serial.print(speedIntegral);
+        Serial.print("\t");
+        Serial.print(theta_n);
+        Serial.print("\t");
         // Serial.print(integral);
         // Serial.print("\t");
         // Serial.print(leftpwm);
         // Serial.print("\t");
         // Serial.print(rightpwm);
         // Serial.print("\t");
-        // Serial.print(Kp);
-        // Serial.print("\t");
-        // Serial.print(Ki);
-        // Serial.print("\t");
-        // Serial.print(Kd);
-        // Serial.print("\t");
-        // Serial.println(result); // ends the line
+        Serial.print(Kp);
+        Serial.print("\t");
+        Serial.print(Ki);
+        Serial.print("\t");
+        Serial.print(Kd);
+        Serial.print("\t");
+        Serial.print(Kp_v);
+        Serial.print("\t");
+        Serial.print(Ki_v);
+        Serial.print("\t");
+        Serial.println(result); // ends the line
     }
 }
