@@ -5,6 +5,10 @@
 #include <ArduinoBLE.h>
 #include "movement.h"
 #include <Wire.h>
+#include "TCA9548A.h"
+
+
+// #include "../utils/movement.h" 
 
 #define BUFFER_SIZE 20
 
@@ -34,24 +38,38 @@ unsigned long currentTime = 0;
 float old_theta_n = 0;
 float theta_n = 0;
 
-float setpoint = 0.0; // Global setpoint for PID controller
+float setpoint = -0.67; // Global setpoint for PID controller
 
 //-------------------------------------------------------------------------
 
 // Speed Control Parameters
-AS5600 encoder;
-int32_t targetSpeed = 0;  // Desired cumulative ticks
-int32_t currentSpeed = 0; // From AS5600
-int32_t speedError = 0;
-float speedIntegral = 0;
+// Multiplexer and AS5600 objects
+TCA9548A I2CMux;
+AS5600 encoderLeft;
+AS5600 encoderRight;
 
-float Kp_v = 0.1;   // Start small, tune upward
-float Ki_v = Ki_v/200.0; // Prevent slow drift
+// Filtering parameters
+float filteredRPMLeft = 0;
+float filteredRPMRight = 0;
+const float alpha = 0.2;          // Smoothing factor
+const float noiseThreshold = 3.0; // RPM threshold for noise suppression
 
-float maxTilt = 5;
-float PWM_v = 0;
-float mech_zero = 0;
-float output_v = 0;
+// Previous angle and timestamp per encoder
+float prevAngleLeft = 0;
+float prevAngleRight = 0;
+unsigned long prevTimeLeft = 0;
+unsigned long prevTimeRight = 0;
+
+float targetSpeed = 0; // Desired cumulative ticks
+
+float Kp_v = 0.1;          // Start small, tune upward
+float Ki_v = Kp_v / 200.0; // Prevent slow drift
+
+float PWM_a = 0;
+float PWM_vl = 0;
+float PWM_vr = 0;
+float PWM_t = 0;
+float totalPWM = 0;
 
 //-------------------------------------------------------------------------
 
@@ -62,6 +80,296 @@ BLECharacteristic customCharacteristic(
 
 //-------------------------------------------------------------------------
 
+float PID_speed(float filteredRPMLeft, float filteredRPMRight);
+float readRPM(float &previousAngle, unsigned long &previousTime, AS5600 &encoder);
+void keyboard_test(void);
+float PID(float setpoint, float currentValue);
+
+//-------------------------------------------------------------------------
+
+void setup()
+{
+    Serial.begin(9600);
+    while (!Serial)
+        ;
+    Serial.setTimeout(10);
+
+    // Initialize IMU for self-balancing
+    if (!IMU.begin())
+    {
+        Serial.println("Failed to initialize IMU!");
+        while (1)
+            ;
+    }
+
+    // ------------------------- TCA Setup -------------------------
+    Wire.begin();
+    I2CMux.begin(Wire);
+    I2CMux.closeAll();
+
+    // ------------------------- Prime encoders -------------------------
+    I2CMux.openChannel(0);
+    delay(10);
+
+    prevAngleLeft = encoderLeft.readAngle() * (360.0 / 4096.0);
+    prevTimeLeft = micros();
+    I2CMux.closeChannel(0);
+    I2CMux.openChannel(1);
+    delay(10);
+    prevAngleRight = encoderRight.readAngle() * (360.0 / 4096.0);
+    prevTimeRight = micros();
+    I2CMux.closeChannel(1);
+
+    Serial.println("AS5600 RPM monitoring via TCA9548A started.");
+
+    // ------------------------- Bluetooth Setup -------------------------
+
+    pinMode(LED_BUILTIN, OUTPUT);
+    if (!BLE.begin())
+    {
+        Serial.println("Starting BLE failed!");
+        while (1)
+            ;
+    }
+
+    BLE.setLocalName("BLE-DEVICE-A12");
+    BLE.setDeviceName("BLE-DEVICE-A12");
+    customService.addCharacteristic(customCharacteristic);
+    BLE.addService(customService);
+    customCharacteristic.writeValue("Waiting for data");
+    BLE.advertise();
+    Serial.println("Bluetooth® device active, waiting for connections...");
+}
+
+//-------------------------------------------------------------------------
+
+void loop()
+{
+    BLEDevice central = BLE.central();
+    int leftpwm;
+    int rightpwm;
+    float current_rpm;
+    float rpmLeft = 0;
+    float rpmRight = 0;
+
+    if (central)
+    {
+        // Check central connection
+        Serial.print("Connected to central: ");
+        Serial.println(central.address());
+        digitalWrite(LED_BUILTIN, HIGH);
+
+        // Keep running while connected
+        while (central.connected())
+        {
+
+            // keyboard_test();
+            // // ------------------------- Speed Controller -----------------------------
+
+            // currentSpeed = encoder.getAngularSpeed(AS5600_MODE_DEGREES, true); // deg/sec
+            // speedError = targetSpeed - currentSpeed;
+            // speedIntegral += speedError * dt;                      // dt in seconds
+            // speedIntegral = constrain(speedIntegral, -1000, 1000); // anti-windup
+            // output_v = constrain(Kp_v * speedError + Ki_v * speedIntegral, -maxTilt, maxTilt);
+
+            // // ------------------------- Angle PID Controller -------------------------
+            // old_theta_n = theta_n;
+            // theta_n = getAngle(old_theta_n); // angles
+            // result = PID(output_v + mech_zero, theta_n);
+
+            // leftpwm = map(abs(result) * 1.2, 0, 255, 0, 255);
+            // rightpwm = map(abs(result), 0, 255, 0, 255);
+
+            // if (result < 0)
+            // {
+            //     forward_slow(rightpwm, leftpwm);
+            // }
+            // else if (result > 0)
+            // {
+            //     backward_slow(rightpwm, leftpwm);
+            // }
+            // else
+            //     forward(0, 0);
+
+            // Serial.print(output_v);
+            // Serial.print("\t");
+            // Serial.print(speedError);
+            // Serial.print("\t");
+            // Serial.print(speedIntegral);
+
+            // Serial.print(theta_n);
+            // Serial.print("\t");
+            // // Serial.print(integral);
+            // // Serial.print("\t");
+            // // Serial.print(leftpwm);
+            // // Serial.print("\t");
+            // // Serial.print(rightpwm);
+            // // Serial.print("\t");
+            // Serial.print(Kp);
+            // Serial.print("\t");
+            // Serial.print(Ki);
+            // Serial.print("\t");
+            // Serial.print(Kd);
+            // Serial.print("\t");
+            // Serial.print(Kp_v);
+            // Serial.print("\t");
+            // Serial.print(Ki_v);
+            // Serial.print("\t");
+            // Serial.println(result); // ends the line
+
+            // ------------------------- Bluetooth Controller -------------------------
+            if (customCharacteristic.written())
+            {
+                int length = customCharacteristic.valueLength();
+                const unsigned char *receivedData = customCharacteristic.value();
+                char receivedString[length + 1];
+
+                memcpy(receivedString, receivedData, length);
+                receivedString[length] = '\0';
+
+                if (strcmp(receivedString, "W") == 0)
+                {
+                    Serial.println("W");
+                    setpoint = 1; // setpoint for PID for forward, 1 degree
+                }
+                else if (strcmp(receivedString, "S") == 0)
+                {
+                    Serial.println("S");
+                    setpoint = -1; // setpoint for PID for backward, 1 degree
+                }
+                else if (strcmp(receivedString, "A") == 0)
+                { // left
+                    Serial.println("A");
+                    rfw_lbw(leftpwm, rightpwm);
+                }
+                else if (strcmp(receivedString, "D") == 0)
+                { // right
+                    Serial.println("D");
+                    lfw_rbw(leftpwm, rightpwm);
+                }
+            }
+
+        } // Central Closed
+    }
+    else
+    {
+        keyboard_test();
+
+        // ------------------------- Angle PID Controller -------------------------
+
+        theta_n = getAngle(old_theta_n); // angles
+        PWM_a = PID(setpoint, theta_n);
+        old_theta_n = theta_n;
+
+        // ------------------------- Speed Controller -----------------------------
+
+        // currentSpeed = encoder.getAngularSpeed(AS5600_MODE_DEGREES, true); // deg/sec
+        // speedError = targetSpeed - currentSpeed;
+        // speedIntegral += speedError * dt;                      // dt in seconds
+        // speedIntegral = constrain(speedIntegral, -1000, 1000); // anti-windup
+        // output_v = constrain(Kp_v * speedError + Ki_v * speedIntegral, -maxTilt, maxTilt);
+
+        // --- Left Encoder (Channel 0) ---
+        I2CMux.openChannel(0);
+        rpmLeft = readRPM(prevAngleLeft, prevTimeLeft, encoderLeft);
+        I2CMux.closeChannel(0);
+
+        // --- Right Encoder (Channel 1) ---
+        I2CMux.openChannel(1);
+        rpmRight = -readRPM(prevAngleRight, prevTimeRight, encoderRight); // Negate if needed for direction
+        I2CMux.closeChannel(1);
+
+        // --- Filter ---
+        filteredRPMLeft = alpha * rpmLeft + (1 - alpha) * filteredRPMLeft;
+        filteredRPMRight = alpha * rpmRight + (1 - alpha) * filteredRPMRight;
+
+        if (abs(filteredRPMLeft) < noiseThreshold)
+            filteredRPMLeft = 0;
+        if (abs(filteredRPMRight) < noiseThreshold)
+            filteredRPMRight = 0;
+
+        PWM_vl = PID_speed(filteredRPMLeft);
+        PWM_vr = PID_speed(filteredRPMRight);
+
+        // ------------------------- PWM Assignment-----------------------------
+
+        leftpwm = map(PWM_vl + PWM_a, 0, 255, 0, 255);
+        rightpwm = map(PWM_vr + PWM_a, 0, 255, 0, 255);
+
+        if (totalPWM < 0)
+        {
+            forward_slow(rightpwm, leftpwm);
+        }
+        else if (totalPWM > 0)
+        {
+            backward_slow(rightpwm, leftpwm);
+        }
+        else
+            forward(0, 0);
+
+        
+        Serial.print(filteredRPMLeft, 2);
+        Serial.print("\t");        
+        Serial.print(filteredRPMRight, 2);
+        Serial.print("\t");        
+        Serial.print(totalPWM, 2);
+        Serial.print("\t");        
+        Serial.print(PWM_a, 2);
+        Serial.print("\t");        
+        Serial.print(PWM_v, 2);
+        Serial.print("\t");
+        Serial.print(theta_n);
+        Serial.print("\t");
+        // Serial.print(integral);
+        // Serial.print("\t");
+        // Serial.print(leftpwm);
+        // Serial.print("\t");
+        // Serial.print(rightpwm);
+        // Serial.print("\t");
+        Serial.print(K_mast);
+        Serial.print("\t");
+        Serial.print(Kp);
+        Serial.print("\t");
+        Serial.print(Ki);
+        Serial.print("\t");
+        Serial.print(Kd);
+        Serial.print("\t");
+        Serial.print(Kp_v);
+        Serial.print("\t");
+        Serial.println(Ki_v);
+        // Serial.print("\t");
+        // Serial.println(result); // ends the line
+    }
+}
+
+//-------------------------------------------------------------------------
+// Speed PID controller
+float PID_speed(float filteredRPM)
+{
+    float pwm_speed;
+    float Encoder_Least, Encoder;
+    float Encoder_Integral;
+
+    Encoder_Least = filteredRPM - targetSpeed; // movement is target speed = 0
+
+    Encoder *= 0.6;
+    Encoder += Encoder_Least * 0.2;
+
+    Encoder_Integral += Encoder;
+
+    // Integral windup guard
+    if (Encoder_Integral > 8000)
+        Encoder_Integral = 8000;
+    if (Encoder_Integral < -6000)
+        Encoder_Integral = -6000;
+
+    // PI controller
+    pwm_speed = Kp_v * Encoder + Ki_v * Encoder_Integral;
+
+    return pwm_speed;
+}
+
+//-------------------------------------------------------------------------
 // Angle PID controller
 float PID(float setpoint, float currentValue)
 {
@@ -96,37 +404,6 @@ float PID(float setpoint, float currentValue)
 }
 
 //-------------------------------------------------------------------------
-
-// Speed PID controller
-float PID_speed(int32_t encoder_left, int32_t encoder_right)
-{
-    float pwm_speed;
-    float Encoder_Least, Encoder;
-    float Encoder_Integral;
-
-    Encoder_Least = (encoder_left + encoder_right) - targetSpeed; // movement is target speed = 0
-
-    Encoder *= 0.6;
-    Encoder += Encoder_Least * 0.2;
-
-    Encoder_Integral += Encoder;
-
-    // Integral windup guard
-    if (Encoder_Integral > 8000) Encoder_Integral = 8000;
-    if (Encoder_Integral < -6000) Encoder_Integral = -6000;
-
-    // PI controller
-    pwm_speed = Kp_v * Encoder + Kp_v * Encoder_Integral;
-
-    if (maxTilt == 5) {
-      Encoder_Integral = 0;
-    }
-
-    return pwm_speed;
-}
-
-//-------------------------------------------------------------------------
-
 // Keyboard Input PID values
 void keyboard_test(void)
 {
@@ -166,6 +443,10 @@ void keyboard_test(void)
     {
         task = 6;
     }
+    else if (input == "km")
+    {
+        task = 7;
+    }
 
     switch (task)
     {
@@ -193,221 +474,31 @@ void keyboard_test(void)
         if (input == "0" || input.toFloat() > 0)
             Ki_v = input.toFloat();
         break;
+    case 7:
+        if (input == "0" || input.toFloat() > 0)
+            K_mast = input.toFloat();
+    break;
     }
 }
 
 //-------------------------------------------------------------------------
-
-void setup()
+// Reads RPM from an AS5600 encoder via angle delta and time delta
+float readRPM(float &previousAngle, unsigned long &previousTime, AS5600 &encoder)
 {
-    Serial.begin(9600);
-    while (!Serial)
-        ;
-    Serial.setTimeout(10);
+    float currentAngle = encoder.readAngle() * (360.0 / 4096.0);
+    unsigned long currentTime = micros();
+    float dt = (float)(currentTime - previousTime) / 1e6; // seconds
 
-    // Initialize IMU for self-balancing
-    if (!IMU.begin())
-    {
-        Serial.println("Failed to initialize IMU!");
-        while (1)
-            ;
-    }
+    float delta = currentAngle - previousAngle;
+    if (delta > 180)
+        delta -= 360;
+    if (delta < -180)
+        delta += 360;
 
-    // ------------------------- AS5600 Setup -------------------------
+    float rpm = (delta / 360.0) * 60.0 / dt;
 
-    Wire.begin(); // Initialize I2C
-    if (!encoder.begin())
-    {
-        Serial.println("Failed to initialize AS5600 encoder!");
-        while (1)
-            ;
-    } // Error message of AS5600
+    previousAngle = currentAngle;
+    previousTime = currentTime;
 
-    // -------------------------------------------------------------------
-
-    // LED to indicate connection status
-    pinMode(LED_BUILTIN, OUTPUT);
-    if (!BLE.begin())
-    {
-        Serial.println("Starting BLE failed!");
-        while (1)
-            ;
-    }
-
-    // ------------------------- Bluetooth Setup -------------------------
-
-    BLE.setLocalName("BLE-DEVICE-A12");
-    BLE.setDeviceName("BLE-DEVICE-A12");
-    customService.addCharacteristic(customCharacteristic);
-    BLE.addService(customService);
-    customCharacteristic.writeValue("Waiting for data");
-    BLE.advertise();
-    Serial.println("Bluetooth® device active, waiting for connections...");
-}
-
-//-------------------------------------------------------------------------
-
-void loop()
-{
-    BLEDevice central = BLE.central();
-    int leftpwm;
-    int rightpwm;
-    float current_rpm;
-    float result;
-
-    if (central)
-    {
-        // Check central connection
-        Serial.print("Connected to central: ");
-        Serial.println(central.address());
-        digitalWrite(LED_BUILTIN, HIGH);
-
-        // Keep running while connected
-        while (central.connected())
-        {
-
-            keyboard_test();
-            // ------------------------- Speed Controller -----------------------------
-
-            currentSpeed = encoder.getAngularSpeed(AS5600_MODE_DEGREES, true); // deg/sec
-            speedError = targetSpeed - currentSpeed;
-            speedIntegral += speedError * dt;                      // dt in seconds
-            speedIntegral = constrain(speedIntegral, -1000, 1000); // anti-windup
-            output_v = constrain(Kp_v * speedError + Ki_v * speedIntegral, -maxTilt, maxTilt);
-
-            // ------------------------- Angle PID Controller -------------------------
-            old_theta_n = theta_n;
-            theta_n = getAngle(old_theta_n); // angles
-            result = PID(output_v + mech_zero, theta_n);
-
-            leftpwm = map(abs(result) * 1.2, 0, 255, 0, 255);
-            rightpwm = map(abs(result), 0, 255, 0, 255);
-
-            if (result < 0)
-            {
-                forward_slow(rightpwm, leftpwm);
-            }
-            else if (result > 0)
-            {
-                backward_slow(rightpwm, leftpwm);
-            }
-            else
-                forward(0, 0);
-
-            Serial.print(output_v);
-            Serial.print("\t");
-            Serial.print(speedError);
-            Serial.print("\t");
-            Serial.print(speedIntegral);
-
-            Serial.print(theta_n);
-            Serial.print("\t");
-            // Serial.print(integral);
-            // Serial.print("\t");
-            // Serial.print(leftpwm);
-            // Serial.print("\t");
-            // Serial.print(rightpwm);
-            // Serial.print("\t");
-            Serial.print(Kp);
-            Serial.print("\t");
-            Serial.print(Ki);
-            Serial.print("\t");
-            Serial.print(Kd);
-            Serial.print("\t");
-            Serial.print(Kp_v);
-            Serial.print("\t");
-            Serial.print(Ki_v);
-            Serial.print("\t");
-            Serial.println(result); // ends the line
-
-            // ------------------------- Bluetooth Controller -------------------------
-            if (customCharacteristic.written())
-            {
-                int length = customCharacteristic.valueLength();
-                const unsigned char *receivedData = customCharacteristic.value();
-                char receivedString[length + 1];
-
-                memcpy(receivedString, receivedData, length);
-                receivedString[length] = '\0';
-
-                if (strcmp(receivedString, "W") == 0)
-                {
-                    Serial.println("W");
-                    setpoint = 1; // setpoint for PID for forward, 1 degree
-                }
-                else if (strcmp(receivedString, "S") == 0)
-                {
-                    Serial.println("S");
-                    setpoint = -1; // setpoint for PID for backward, 1 degree
-                }
-                else if (strcmp(receivedString, "A") == 0)
-                { // left
-                    Serial.println("A");
-                    rfw_lbw(leftpwm, rightpwm);
-                }
-                else if (strcmp(receivedString, "D") == 0)
-                { // right
-                    Serial.println("D");
-                    lfw_rbw(leftpwm, rightpwm);
-                }
-            }
-
-        } // Central Closed
-    }
-    else
-    {
-        keyboard_test();
-        // ------------------------- Speed Controller -----------------------------
-
-        currentSpeed = encoder.getAngularSpeed(AS5600_MODE_DEGREES, true); // deg/sec
-        speedError = targetSpeed - currentSpeed;
-        speedIntegral += speedError * dt;                      // dt in seconds
-        speedIntegral = constrain(speedIntegral, -1000, 1000); // anti-windup
-        output_v = constrain(Kp_v * speedError + Ki_v * speedIntegral, -maxTilt, maxTilt);
-
-        // ------------------------- Angle PID Controller -------------------------
-        old_theta_n = theta_n;
-        theta_n = getAngle(old_theta_n); // angles
-        result = PID(output_v + mech_zero, theta_n);
-
-        leftpwm = map(abs(result) * 1.2, 0, 255, 0, 255);
-        rightpwm = map(abs(result), 0, 255, 0, 255);
-
-        if (result < 0)
-        {
-            forward_slow(rightpwm, leftpwm);
-        }
-        else if (result > 0)
-        {
-            backward_slow(rightpwm, leftpwm);
-        }
-        else
-            forward(0, 0);
-
-        Serial.print(output_v);
-        Serial.print("\t");
-        Serial.print(speedError);
-        Serial.print("\t");
-        Serial.print(speedIntegral);
-        Serial.print("\t");
-        Serial.print(theta_n);
-        Serial.print("\t");
-        // Serial.print(integral);
-        // Serial.print("\t");
-        // Serial.print(leftpwm);
-        // Serial.print("\t");
-        // Serial.print(rightpwm);
-        // Serial.print("\t");
-        Serial.print(Kp);
-        Serial.print("\t");
-        Serial.print(Ki);
-        Serial.print("\t");
-        Serial.print(Kd);
-        Serial.print("\t");
-        Serial.print(Kp_v);
-        Serial.print("\t");
-        Serial.print(Ki_v);
-        Serial.print("\t");
-        Serial.println(result); // ends the line
-    }
+    return rpm;
 }

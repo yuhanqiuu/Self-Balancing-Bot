@@ -3,10 +3,10 @@
 
 #include <Arduino.h>
 
-#define AIN1 2
-#define AIN2 3
-#define BIN2 4
-#define BIN1 5
+#define LEFT1 2  // AIN1
+#define LEFT2 3  // AIN2
+#define RIGHT2 4 // BIN2
+#define RIGHT1 5 // BIN1
 
 // Function declarations
 float rpm_to_pwm_left(float rpm);

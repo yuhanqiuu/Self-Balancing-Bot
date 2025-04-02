@@ -30,5 +30,4 @@ void goLeft();
 void goRight();
 
 float getAngle(float old_theta_n);
-
 #endif

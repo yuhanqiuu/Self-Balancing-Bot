@@ -128,18 +128,6 @@ float getAngle(float theta_n)
 
     float dt = (float) (micros() - ct) / 1000000;  // gets time for ∆t
     ct = micros();  // sets new current time
-    
-    // if (IMU.accelerationAvailable())
-    // {
-    //     IMU.readAcceleration(x, y, z);
-    //     theta_an = atan(y / z) * 180 / M_PI; // might need to change the axis later
-    // }
-
-    // if (IMU.gyroscopeAvailable())
-    // {
-    //     IMU.readGyroscope(x, y, z);
-    //     theta_gn += x * (1 / IMU.gyroscopeSampleRate());
-    // }
 
     if (IMU.gyroscopeAvailable()) {
         // reads gyroscope value
@@ -163,3 +151,4 @@ float getAngle(float theta_n)
 }
 
 //-------------------------------------------------------------------------
+

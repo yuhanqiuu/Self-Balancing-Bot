@@ -20,60 +20,60 @@ float rpm_to_pwm_right(float rpm) {
 
 // Initialize motor pins
 void setupMotors() {
-    pinMode(BIN1, OUTPUT);
-    pinMode(BIN2, OUTPUT);
-    pinMode(AIN1, OUTPUT);
-    pinMode(AIN2, OUTPUT);
+    pinMode(RIGHT1, OUTPUT);
+    pinMode(RIGHT2, OUTPUT);
+    pinMode(LEFT1, OUTPUT);
+    pinMode(LEFT2, OUTPUT);
 }
 
 // Forward fast decay
 void forward(int pwm1, int pwm2) {
-    analogWrite(AIN1, pwm1);   
-    digitalWrite(AIN2, LOW);   
-    analogWrite(BIN1, pwm2); 
-    digitalWrite(BIN2, LOW); 
+    analogWrite(LEFT1, pwm1);   
+    digitalWrite(LEFT2, LOW);   
+    analogWrite(RIGHT1, pwm2); 
+    digitalWrite(RIGHT2, LOW); 
 }
 
 // Reverse fast decay
 void backward(int pwm1, int pwm2) {  
-    digitalWrite(AIN1, LOW);   
-    analogWrite(AIN2, pwm1);   
-    digitalWrite(BIN1, LOW); 
-    analogWrite(BIN2, pwm2);  
+    digitalWrite(LEFT1, LOW);   
+    analogWrite(LEFT2, pwm1);   
+    digitalWrite(RIGHT1, LOW); 
+    analogWrite(RIGHT2, pwm2);  
 }
 
 // Left forward, right backward
 void lfw_rbw(int pwm1, int pwm2) { 
-    analogWrite(AIN1, pwm1);  
-    digitalWrite(AIN2, LOW);
-    analogWrite(BIN2, pwm2);
-    digitalWrite(BIN1, LOW);
+    analogWrite(LEFT1, pwm1);  
+    digitalWrite(LEFT2, LOW);
+    analogWrite(RIGHT2, pwm2);
+    digitalWrite(RIGHT1, LOW);
 }
 
 //right foward, left backward
 void rfw_lbw(int pwm1, int pwm2){ 
-    analogWrite(AIN2, pwm1); 
-    digitalWrite(AIN1, LOW);
+    analogWrite(LEFT2, pwm1); 
+    digitalWrite(LEFT1, LOW);
   
-    analogWrite(BIN1, pwm2);
-    digitalWrite(BIN2, LOW);
+    analogWrite(RIGHT1, pwm2);
+    digitalWrite(RIGHT2, LOW);
   }
 
   // slow decay
 void backward_slow(int pwm1, int pwm2){
-    analogWrite(AIN2, pwm1);   
-    digitalWrite(AIN1, HIGH); 
+    analogWrite(LEFT2, pwm1);   
+    digitalWrite(LEFT1, HIGH); 
   
-    analogWrite(BIN2, pwm2); 
-    digitalWrite(BIN1, HIGH); 
+    analogWrite(RIGHT2, pwm2); 
+    digitalWrite(RIGHT1, HIGH); 
   }
   
   void forward_slow(int pwm1, int pwm2) {  
-      digitalWrite(AIN2, HIGH);   
-      analogWrite(AIN1, pwm1);
+      digitalWrite(LEFT2, HIGH);   
+      analogWrite(LEFT1, pwm1);
   
-      digitalWrite(BIN2, HIGH); 
-      analogWrite(BIN1, pwm2);  
+      digitalWrite(RIGHT2, HIGH); 
+      analogWrite(RIGHT1, pwm2);  
   }
   
   //left forward, right backward
@@ -81,41 +81,23 @@ void backward_slow(int pwm1, int pwm2){
   void lfw_rbw_slow(int pwm1, int pwm2){ 
   
     // Right motor forward
-    analogWrite(AIN2, pwm1);  
-    digitalWrite(AIN1, HIGH);
+    analogWrite(LEFT2, pwm1);  
+    digitalWrite(LEFT1, HIGH);
     
-    analogWrite(BIN1, pwm2);
-    digitalWrite(BIN2, HIGH);
+    analogWrite(RIGHT1, pwm2);
+    digitalWrite(RIGHT2, HIGH);
   
    
   }
   
   //right foward, left backward
   void rfw_lbw_slow(int pwm1, int pwm2){ 
-    analogWrite(AIN1, pwm1); 
-    digitalWrite(AIN2, HIGH);
+    analogWrite(LEFT1, pwm1); 
+    digitalWrite(LEFT2, HIGH);
   
-    analogWrite(BIN2, pwm2);
-    digitalWrite(BIN1, HIGH);
+    analogWrite(RIGHT2, pwm2);
+    digitalWrite(RIGHT1, HIGH);
   }
-  
-//-------------------------------------------------------------------------
-// full rpm. 
-void goForward() {
-    forward(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
-}
-
-void goBackward() {
-    backward(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
-}
-
-void goRight() {
-    lfw_rbw(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
-}
-
-void goLeft() {
-    rfw_lbw(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
-}
 
 //-------------------------------------------------------------------------
 
@@ -128,18 +110,6 @@ float getAngle(float theta_n)
 
     float dt = (float) (micros() - ct) / 1000000;  // gets time for ∆t
     ct = micros();  // sets new current time
-    
-    // if (IMU.accelerationAvailable())
-    // {
-    //     IMU.readAcceleration(x, y, z);
-    //     theta_an = atan(y / z) * 180 / M_PI; // might need to change the axis later
-    // }
-
-    // if (IMU.gyroscopeAvailable())
-    // {
-    //     IMU.readGyroscope(x, y, z);
-    //     theta_gn += x * (1 / IMU.gyroscopeSampleRate());
-    // }
 
     if (IMU.gyroscopeAvailable()) {
         // reads gyroscope value
