@@ -98,8 +98,7 @@ void setup()
     if (!IMU.begin())
     {
         Serial.println("Failed to initialize IMU!");
-        while (1)
-            ;
+        while (1);
     }
 
     // ------------------------- TCA Setup -------------------------
@@ -115,7 +114,7 @@ void setup()
     prevTimeLeft = micros();
     I2CMux.closeChannel(0);
     I2CMux.openChannel(1);
-    delay(10);
+
     prevAngleRight = encoderRight.readAngle() * (360.0 / 4096.0);
     prevTimeRight = micros();
     I2CMux.closeChannel(1);
