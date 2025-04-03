@@ -15,9 +15,9 @@ float old_theta_n = 0;
 String input;
 int task = 0;
 
-float Kp = 15;          // (P)roportional Tuning Parameter 12-14? 33
-float Ki = 8;          // (I)ntegral Tuning Parameter        78
-float Kd = 0.23;          // (D)erivative Tuning Parameter   0.77
+float Kp = 18.5;          // (P)roportional Tuning Parameter 12-14? 33
+float Ki = 0;          // (I)ntegral Tuning Parameter        78
+float Kd = 0.48;          // (D)erivative Tuning Parameter   0.77
 float K_mast = 1.0;
     
 // PID Variables

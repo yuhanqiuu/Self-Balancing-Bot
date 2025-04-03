@@ -8,7 +8,7 @@
 #include "TCA9548A.h"
 
 
-// #include "../utils/movement.h" 
+// #include "../utils/movement.h"
 
 #define BUFFER_SIZE 20
 
@@ -22,9 +22,9 @@ int task = 0;
 //-------------------------------------------------------------------------
 
 // Angle PID parameters
-float Kp = 27;  // (P)roportional Tuning Parameter 12-14? 18
+float Kp = 18.5;  // (P)roportional Tuning Parameter 12-14? 18
 float Ki = 0.0;   // (I)ntegral Tuning Parameter        8
-float Kd = 0.4; // (D)erivative Tuning Parameter   0.6
+float Kd = 0.48; // (D)erivative Tuning Parameter   0.6
 float K_mast = 1;
 
 float previousError = 0;

@@ -74,8 +74,8 @@ void forward_slow(int pwm1, int pwm2){
   
   void backward_slow(int pwm1, int pwm2) {
 
-    pwm1 = map(pwm1,0,255,230,0);   
-    pwm2 = map(pwm2,0,255,230,0);  
+    pwm1 = map(pwm1,0,255,250,0);   
+    pwm2 = map(pwm2,0,255,250,0);  
       digitalWrite(AIN2, HIGH);   
       analogWrite(AIN1, pwm1);
   
