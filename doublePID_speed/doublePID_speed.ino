@@ -22,10 +22,10 @@ int task = 0;
 //-------------------------------------------------------------------------
 
 // Angle PID parameters
-float Kp = 18;  // (P)roportional Tuning Parameter 12-14? 18
-float Ki = 8;   // (I)ntegral Tuning Parameter        8
-float Kd = 0.6; // (D)erivative Tuning Parameter   0.6
-float K_mast = 0.6;
+float Kp = 27;  // (P)roportional Tuning Parameter 12-14? 18
+float Ki = 0.0;   // (I)ntegral Tuning Parameter        8
+float Kd = 0.4; // (D)erivative Tuning Parameter   0.6
+float K_mast = 1;
 
 float previousError = 0;
 float integral = 0;
@@ -62,7 +62,7 @@ unsigned long prevTimeRight = 0;
 
 float targetSpeed = 0; // Desired cumulative ticks
 
-float Kp_v = 0.1;          // Start small, tune upward
+float Kp_v = 0;          // Start small, tune upward
 float Ki_v = Kp_v / 200.0; // Prevent slow drift
 
 float PWM_a = 0;
@@ -292,14 +292,15 @@ void loop()
 
         // ------------------------- PWM Assignment-----------------------------
 
-        leftpwm = map(PWM_vl + PWM_a, 0, 255, 0, 255);
-        rightpwm = map(PWM_vr + PWM_a, 0, 255, 0, 255);
+        leftpwm = PWM_vl + PWM_a;
+        rightpwm = PWM_vl + PWM_a;
 
-        if (totalPWM < 0)
+        totalPWM = PWM_vl + PWM_a;
+        if (totalPWM > 0)
         {
             forward_slow(rightpwm, leftpwm);
         }
-        else if (totalPWM > 0)
+        else if (totalPWM < 0)
         {
             backward_slow(rightpwm, leftpwm);
         }
@@ -315,8 +316,8 @@ void loop()
         Serial.print("\t");        
         Serial.print(PWM_a, 2);
         Serial.print("\t");        
-        Serial.print(PWM_v, 2);
-        Serial.print("\t");
+        // Serial.print(PWM_v, 2);
+        // Serial.print("\t");
         Serial.print(theta_n);
         Serial.print("\t");
         // Serial.print(integral);
@@ -341,13 +342,14 @@ void loop()
     }
 }
 
+float Encoder_Integral = 0;
 //-------------------------------------------------------------------------
 // Speed PID controller
 float PID_speed(float filteredRPM)
 {
     float pwm_speed;
     float Encoder_Least, Encoder;
-    float Encoder_Integral;
+    Encoder_Integral;
 
     Encoder_Least = filteredRPM - targetSpeed; // movement is target speed = 0
 
@@ -386,7 +388,7 @@ float PID(float setpoint, float currentValue)
     integral = constrain(integral, -30, 30); // Example limit
 
     // Derivative term (rate of change of error)
-    derivative = (error - previousError) / dt;
+    // derivative = (error - previousError) / dt;
     if (theta_n - old_theta_n > 0.1 || theta_n - old_theta_n < -0.1)
         derivative = -Kd * (theta_n - old_theta_n) / dt; // computes the derivative error
     else
@@ -428,7 +430,8 @@ void keyboard_test(void)
     }
     else if (input == "reset")
     {
-        setpoint = 0;
+        Encoder_Integral = 0;
+        integral = 0;
     }
     else if (input == "s")
     {
@@ -463,7 +466,7 @@ void keyboard_test(void)
         break;
     case 4:
         if (input == "0" || input.toFloat() != 0)
-            K_mast = input.toFloat();
+            setpoint = input.toFloat();
         break;
     case 5:
         if (input == "0" || input.toFloat() > 0)

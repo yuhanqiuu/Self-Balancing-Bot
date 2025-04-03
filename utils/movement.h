@@ -3,10 +3,10 @@
 
 #include <Arduino.h>
 
-#define LEFT1 2  // AIN1
-#define LEFT2 3  // AIN2
-#define RIGHT2 4 // BIN2
-#define RIGHT1 5 // BIN1
+#define LEFT1 2  //  AIN1, BIN1 yellow wire
+#define LEFT2 3  //  yellow wire
+#define RIGHT2 4 //  green wire
+#define RIGHT1 5 //  green wire
 
 // Function declarations
 float rpm_to_pwm_left(float rpm);

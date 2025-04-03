@@ -15,9 +15,9 @@ float old_theta_n = 0;
 String input;
 int task = 0;
 
-float Kp = 33;          // (P)roportional Tuning Parameter 12-14? 33
-float Ki = 78;          // (I)ntegral Tuning Parameter        78
-float Kd = 0.77;          // (D)erivative Tuning Parameter   0.77
+float Kp = 15;          // (P)roportional Tuning Parameter 12-14? 33
+float Ki = 8;          // (I)ntegral Tuning Parameter        78
+float Kd = 0.23;          // (D)erivative Tuning Parameter   0.77
 float K_mast = 1.0;
     
 // PID Variables
@@ -29,13 +29,6 @@ unsigned long lastTime = 0;
 float dt = 0;
 unsigned long currentTime = 0;
 
-// Encoder Setup
-AS5600 as5600;
-float rpm = 0;
-float previousAngle = 0;
-
-// Desired Setpoint
-float setpoint_speed = 0;  // We want the wheel to stay stationary
 
 
 float theta_n = 0;     // current angle inputs???
@@ -153,21 +146,6 @@ void setup() {
   //setting up encoder
   // while(!Serial);
   // Serial.begin(115200);
-  Wire.begin();
-
-  if (!as5600.begin()) {
-      Serial.println("Failed to initialize AS5600 encoder!");
-      while (1);
-  }
-
-  as5600.begin(4);  //  set direction pin.
-  as5600.setDirection(AS5600_CLOCK_WISE);  //  default, just be explicit.
-
-  Serial.println(as5600.getAddress());
-
-  int b = as5600.isConnected();
-  Serial.print("Connect: ");
-  Serial.println(b);
 
   // Initialize the built-in LED to indicate connection status
   pinMode(LED_BUILTIN, OUTPUT);
@@ -217,7 +195,6 @@ void loop() {
 
       old_theta_n = theta_n;
       theta_n = getAngle(old_theta_n); // angles 
-      current_rpm = as5600.getAngularSpeed(AS5600_MODE_RPM);
       
       // Run the PID controller
       result = PID(setpoint, theta_n); // targe value = 0, current value = theta_n, pid output
@@ -302,13 +279,11 @@ void loop() {
   keyboard_test();
   old_theta_n = theta_n; 
   theta_n = getAngle(old_theta_n); // angles 
-    
-  current_rpm = as5600.getAngularSpeed(AS5600_MODE_RPM);
-    
+        
   // Run the PID controller
   result = PID(setpoint, theta_n); // targe value = 0, current value = theta_n, pid output
 
-  leftpwm = abs(result)*1.2;
+  leftpwm = abs(result);
   rightpwm = abs(result);
 
   // leftpwm = map(constrain(abs(result)*1.2,0, 255),0,255,0,250);

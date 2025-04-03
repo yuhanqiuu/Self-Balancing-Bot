@@ -1,60 +1,89 @@
-#include <Wire.h>
-#include <Arduino.h>
-#include "TCA9548A.h"
-#include <AS5600.h>
+// #include <Wire.h>
+// #include <Arduino.h>
+// #include "TCA9548A.h"
+// #include <AS5600.h>
+// #include "movement.h"
 
-TCA9548A I2CMux;
-AS5600 encoder;
+// // Multiplexer and AS5600 objects
+// TCA9548A I2CMux;
+// AS5600 encoderLeft;
+// AS5600 encoderRight;
 
-unsigned long lastReadTime = 0;
-const unsigned long readInterval = 5; // milliseconds
+// // Filtering parameters
+// float filteredRPMLeft = 0;
+// float filteredRPMRight = 0;
+// const float alpha = 0.2;          // Smoothing factor
+// const float noiseThreshold = 1.0; // RPM threshold for noise suppression
 
-void setup()
-{
-    Serial.begin(9600);
-    Wire.begin();
-    I2CMux.begin(Wire);
-    I2CMux.closeAll();
+// // Previous angle and timestamp per encoder
+// float prevAngleLeft = 0;
+// float prevAngleRight = 0;
+// unsigned long prevTimeLeft = 0;
+// unsigned long prevTimeRight = 0;
 
-    // Prime angle & time state for both encoders
-    I2CMux.openChannel(0);
-    delay(2);
-    encoder.readAngle(); // initialize internal angle state
-    I2CMux.closeChannel(0);
+// void setup()
+// {
+//     Serial.begin(115200);
+//     Wire.begin();
+//     I2CMux.begin(Wire);
+//     I2CMux.closeAll();
 
-    I2CMux.openChannel(1);
-    delay(2);
-    encoder.readAngle();
-    I2CMux.closeChannel(1);
-}
+//     // Prime encoders
+//     I2CMux.openChannel(0);
+//     delay(10);
+//     prevAngleLeft = encoderLeft.readAngle() * (360.0 / 4096.0);
+//     prevTimeLeft = micros();
+//     I2CMux.closeChannel(0);
+//     I2CMux.openChannel(1);
+//     delay(10);
+//     prevAngleRight = encoderRight.readAngle() * (360.0 / 4096.0);
+//     prevTimeRight = micros();
+//     I2CMux.closeChannel(1);
 
-void loop()
-{
-    if (millis() - lastReadTime >= readInterval)
-    {
-        lastReadTime = millis();
+//     Serial.println("AS5600 RPM monitoring via TCA9548A started.");
+// }
 
-        float speed0 = 0;
-        float speed1 = 0;
+// void loop()
+// {
+//     forward(100, 100); // Command motors (movement.h)
 
-        // --- Read encoder 0 ---
-        I2CMux.openChannel(0);
-        delayMicroseconds(200);                                       // I2C settle
-        encoder.readAngle();                                          // Update internal angle
-        speed0 = encoder.getAngularSpeed(AS5600_MODE_DEGREES, false); // Use delta
-        I2CMux.closeChannel(0);
+//     float rpmLeft = 0;
+//     float rpmRight = 0;
 
-        // --- Read encoder 1 ---
-        I2CMux.openChannel(1);
-        delayMicroseconds(200);
-        encoder.readAngle();
-        speed1 = encoder.getAngularSpeed(AS5600_MODE_DEGREES, false);
-        I2CMux.closeChannel(1);
+//     // --- Left Encoder (Channel 0) ---
+//     I2CMux.openChannel(0);
+//     delayMicroseconds(25);
+//     rpmLeft = readRPM(prevAngleLeft, prevTimeLeft, encoderLeft);
+//     I2CMux.closeChannel(0);
 
-        // --- Print results ---
-        Serial.print("Encoder 0 Speed: ");
-        Serial.print(speed0, 2);
-        Serial.print(" deg/s | Encoder 1 Speed: ");
-        Serial.println(speed1, 2);
-    }
-}
+//     delay(1); // brief pause between switching
+
+//     // --- Right Encoder (Channel 1) ---
+//     I2CMux.openChannel(1);
+//     delayMicroseconds(25);
+//     rpmRight = -readRPM(prevAngleRight, prevTimeRight, encoderRight); // Negate if needed for direction
+//     I2CMux.closeChannel(1);
+
+//     // --- Filter ---
+//     filteredRPMLeft = alpha * rpmLeft + (1 - alpha) * filteredRPMLeft;
+//     filteredRPMRight = alpha * rpmRight + (1 - alpha) * filteredRPMRight;
+
+//     if (abs(filteredRPMLeft) < noiseThreshold)
+//         filteredRPMLeft = 0;
+//     if (abs(filteredRPMRight) < noiseThreshold)
+//         filteredRPMRight = 0;
+
+//     // --- Print results ---
+//     Serial.print("Raw RPM L: ");
+//     Serial.print(rpmLeft, 2);
+//     Serial.print(" | Filtered RPM L: ");
+//     Serial.print(filteredRPMLeft, 2);
+//     Serial.print(" || Raw RPM R: ");
+//     Serial.print(rpmRight, 2);
+//     Serial.print(" | Filtered RPM R: ");
+//     Serial.println(filteredRPMRight, 2);
+
+//     delay(20); // Limit refresh rate
+// }
+
+
