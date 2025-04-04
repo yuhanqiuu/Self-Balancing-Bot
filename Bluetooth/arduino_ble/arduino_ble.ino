@@ -15,9 +15,9 @@ float old_theta_n = 0;
 String input;
 int task = 0;
 
-float Kp = 18.5;          // (P)roportional Tuning Parameter 12-14? 33
-float Ki = 0;          // (I)ntegral Tuning Parameter        78
-float Kd = 0.48;          // (D)erivative Tuning Parameter   0.77
+float Kp = 18.7;          // (P)roportional Tuning Parameter 12-14? 33
+float Ki = 100;          // (I)ntegral Tuning Parameter        78
+float Kd = 0.75;          // (D)erivative Tuning Parameter   0.77
 float K_mast = 1.0;
     
 // PID Variables
@@ -33,7 +33,7 @@ unsigned long currentTime = 0;
 
 float theta_n = 0;     // current angle inputs???
 float pidOutput = 0;   // PID output
-float setpoint = -1.75;
+float setpoint = 0;
 
 
 //-------------------------------------------------------------------------

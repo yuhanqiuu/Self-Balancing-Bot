@@ -7,7 +7,6 @@
 #include <Wire.h>
 #include "TCA9548A.h"
 
-
 // #include "../utils/movement.h"
 
 #define BUFFER_SIZE 20
@@ -62,7 +61,7 @@ unsigned long prevTimeRight = 0;
 
 float targetSpeed = 0; // Desired cumulative ticks
 
-float Kp_v = 8;          // Start small, tune upward
+float Kp_v = 8;            // Start small, tune upward
 float Ki_v = Kp_v / 200.0; // Prevent slow drift
 
 float PWM_a = 0;
@@ -70,8 +69,6 @@ float PWM_vl = 0;
 float PWM_vr = 0;
 float PWM_t = 0;
 float totalPWM = 0;
-
-float Encoder_Integral = 0.0;
 
 //-------------------------------------------------------------------------
 
@@ -99,7 +96,8 @@ void setup()
     if (!IMU.begin())
     {
         Serial.println("Failed to initialize IMU!");
-        while (1);
+        while (1)
+            ;
     }
 
     // ------------------------- TCA Setup -------------------------
@@ -260,7 +258,6 @@ void loop()
         theta_n = getAngle(old_theta_n); // angles
         PWM_a = PID(setpoint, theta_n);
         old_theta_n = theta_n;
-        
 
         // ------------------------- Speed Controller -----------------------------
 
@@ -288,11 +285,8 @@ void loop()
             filteredRPMLeft = 0;
         if (abs(filteredRPMRight) < noiseThreshold)
             filteredRPMRight = 0;
-        
-        Ki_v = Kp_v / 200.0;
 
-        PWM_vl = PID_speed(filteredRPMLeft);
-        PWM_vr = PID_speed(filteredRPMRight);
+        PWM_vl = PID_speed(filteredRPMLeft,filteredRPMRight);
 
         // ------------------------- PWM Assignment-----------------------------
 
@@ -311,21 +305,20 @@ void loop()
         else
             forward(0, 0);
 
-        
         Serial.print(filteredRPMLeft, 2);
-        Serial.print("\t");        
+        Serial.print("\t");
         Serial.print(filteredRPMRight, 2);
-        Serial.print("\t");        
+        Serial.print("\t");
         Serial.print(totalPWM, 2);
-        Serial.print("\t");        
+        Serial.print("\t");
         Serial.print(PWM_a, 2);
-        Serial.print("\t");        
+        Serial.print("\t");
         // Serial.print(PWM_v, 2);
         // Serial.print("\t");
         Serial.print(theta_n);
         Serial.print("\t");
-        Serial.print(Encoder_Integral);
-        Serial.print("\t");
+        // Serial.print(integral);
+        // Serial.print("\t");
         // Serial.print(leftpwm);
         // Serial.print("\t");
         // Serial.print(rightpwm);
@@ -346,27 +339,31 @@ void loop()
     }
 }
 
-
+float Encoder_Integral = 0;
 //-------------------------------------------------------------------------
 // Speed PID controller
-float PID_speed(float filteredRPM)
+float PID_speed(float en_left, float en_right)
 {
     float pwm_speed;
-    float Encoder_Least, Encoder;
-    Encoder_Integral;
+    float Encoder_Least, Encoder_Integral, Encoder;
 
-    Encoder_Least = filteredRPM - targetSpeed; // movement is target speed = 0
+    dt = (float)(micros() - currentTime) / 1000000.0; // gets time for ∆t
+    if (dt <= 0 || dt > 0.2)
+        dt = 0.01;          // clamp for safety
+    currentTime = micros(); // sets new current tim
 
-    Encoder *= 0.6;
-    Encoder += Encoder_Least * 0.2;
+    Encoder_Least = (en_left+en_right) - targetSpeed; // movement is target speed = 0
+
+    Encoder *= (1-alpha);
+    Encoder += Encoder_Least * alpha;
 
     Encoder_Integral += Encoder;
 
     // Integral windup guard
-    if (Encoder_Integral > 700)
-        Encoder_Integral = 700;
-    if (Encoder_Integral < -700)
-        Encoder_Integral = -700;
+    if (Encoder_Integral > 1000)
+        Encoder_Integral = 1000;
+    if (Encoder_Integral < -1000)
+        Encoder_Integral = -1000;
 
     // PI controller
     pwm_speed = Kp_v * Encoder + Ki_v * Encoder_Integral;
@@ -483,7 +480,7 @@ void keyboard_test(void)
     case 7:
         if (input == "0" || input.toFloat() > 0)
             K_mast = input.toFloat();
-    break;
+        break;
     }
 }
 
