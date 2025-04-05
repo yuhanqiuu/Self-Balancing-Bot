@@ -70,6 +70,7 @@ float PWM_vr = 0;
 float PWM_t = 0;
 float totalPWM = 0;
 
+float Encoder_Integral = 0.0;
 //-------------------------------------------------------------------------
 
 // Define a custom BLE service and characteristic
@@ -277,16 +278,12 @@ void loop()
         rpmRight = -readRPM(prevAngleRight, prevTimeRight, encoderRight); // Negate if needed for direction
         I2CMux.closeChannel(1);
 
-        // --- Filter ---
-        filteredRPMLeft = alpha * rpmLeft + (1 - alpha) * filteredRPMLeft;
-        filteredRPMRight = alpha * rpmRight + (1 - alpha) * filteredRPMRight;
-
-        if (abs(filteredRPMLeft) < noiseThreshold)
+        if (abs(rpmLeft) < noiseThreshold)
             filteredRPMLeft = 0;
-        if (abs(filteredRPMRight) < noiseThreshold)
+        if (abs(rpmRight) < noiseThreshold)
             filteredRPMRight = 0;
 
-        PWM_vl = PID_speed(filteredRPMLeft,filteredRPMRight);
+        PWM_vl = PID_speed(rpmLeft,rpmRight);
 
         // ------------------------- PWM Assignment-----------------------------
 
@@ -305,9 +302,9 @@ void loop()
         else
             forward(0, 0);
 
-        Serial.print(filteredRPMLeft, 2);
+        Serial.print(rpmLeft, 2);
         Serial.print("\t");
-        Serial.print(filteredRPMRight, 2);
+        Serial.print(rpmRight, 2);
         Serial.print("\t");
         Serial.print(totalPWM, 2);
         Serial.print("\t");
@@ -339,18 +336,12 @@ void loop()
     }
 }
 
-float Encoder_Integral = 0;
 //-------------------------------------------------------------------------
 // Speed PID controller
 float PID_speed(float en_left, float en_right)
 {
     float pwm_speed;
     float Encoder_Least, Encoder_Integral, Encoder;
-
-    dt = (float)(micros() - currentTime) / 1000000.0; // gets time for ∆t
-    if (dt <= 0 || dt > 0.2)
-        dt = 0.01;          // clamp for safety
-    currentTime = micros(); // sets new current tim
 
     Encoder_Least = (en_left+en_right) - targetSpeed; // movement is target speed = 0
 

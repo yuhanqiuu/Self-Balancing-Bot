@@ -34,12 +34,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool _isConnected = false; // flag to indicate connection
 
+  Timer? _scanTimer;
+
   // on initialization scan for devices
-  @override
-  void initState() {
-    super.initState();
-    _scanSub = _ble.scanForDevices(withServices: []).listen(_onScanUpdate);
-  }
+    @override
+    void initState() {
+        super.initState();
+        _scanSub = _ble.scanForDevices(withServices: []).listen(_onScanUpdate);
+        _scanTimer = Timer.periodic(Duration(seconds: 5), (timer) {
+        _scanSub?.cancel();
+        _scanSub = _ble.scanForDevices(withServices: []).listen(_onScanUpdate);
+        });
+    }
 
   // when terminating cancel all the subscriptions
   @override
@@ -242,8 +248,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     ElevatedButton(
-                      onPressed: _isConnected ? () => _sendCommand('A') : null,
-                      child: const Text('Send A'),
+                      onPressed: _isConnected ? () => _sendCommand("0") : null,
+                      child: const Text('Stop'),
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
