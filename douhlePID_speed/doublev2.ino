@@ -261,13 +261,7 @@ void loop()
         old_theta_n = theta_n;
 
         // ------------------------- Speed Controller -----------------------------
-
-        // currentSpeed = encoder.getAngularSpeed(AS5600_MODE_DEGREES, true); // deg/sec
-        // speedError = targetSpeed - currentSpeed;
-        // speedIntegral += speedError * dt;                      // dt in seconds
-        // speedIntegral = constrain(speedIntegral, -1000, 1000); // anti-windup
-        // output_v = constrain(Kp_v * speedError + Ki_v * speedIntegral, -maxTilt, maxTilt);
-
+        
         // --- Left Encoder (Channel 0) ---
         I2CMux.openChannel(0);
         rpmLeft = readRPM(prevAngleLeft, prevTimeLeft, encoderLeft);
