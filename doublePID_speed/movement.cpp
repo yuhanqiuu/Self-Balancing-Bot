@@ -29,7 +29,8 @@ void setupMotors() {
 // Forward fast decay
 void forward(int pwm1, int pwm2) {
     analogWrite(LEFT1, pwm1);   
-    digitalWrite(LEFT2, LOW);   
+    digitalWrite(LEFT2, LOW);  
+     
     analogWrite(RIGHT1, pwm2); 
     digitalWrite(RIGHT2, LOW); 
 }
@@ -78,6 +79,28 @@ void backward_slow(int pwm1, int pwm2){
   
       digitalWrite(RIGHT2, HIGH); 
       analogWrite(RIGHT1, pwm2);  
+  }
+
+  void forward_slow_v2(int pwm1, int pwm2) {  
+    pwm1 = map(abs(pwm1),0,255,250,0);   
+    pwm2 = map(abs(pwm2),0,255,250,0); 
+      digitalWrite(LEFT1, HIGH);   
+      analogWrite(LEFT2, pwm1);
+  
+      digitalWrite(RIGHT1, HIGH); 
+      analogWrite(RIGHT2, pwm2);  
+  }
+
+
+  void backward_slow_v2(int pwm1, int pwm2) {
+
+    pwm1 = map(abs(pwm1),0,255,250,0);   
+    pwm2 = map(abs(pwm2),0,255,250,0); 
+    analogWrite(LEFT2, pwm1);   
+    digitalWrite(LEFT1, HIGH); 
+
+    analogWrite(RIGHT1, pwm2); 
+    digitalWrite(RIGHT2, HIGH); 
   }
   
   //left forward, right backward
@@ -137,3 +160,5 @@ float getAngle(float theta_n)
 }
 
 //-------------------------------------------------------------------------
+
+

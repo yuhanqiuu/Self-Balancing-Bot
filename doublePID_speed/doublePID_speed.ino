@@ -206,7 +206,7 @@ void loop()
                 if (strcmp(receivedString, "W") == 0)
                 {
                     Serial.println("W");
-                    setpoint = 0.8; // setpoint for PID for forward, 1 degree
+                    setpoint = 0.9; // setpoint for PID for forward, 1 degree
                     stop_flag = 0;
                     turning = 0;
                     setpoint_speed = 10;
@@ -216,13 +216,12 @@ void loop()
                 else if (strcmp(receivedString, "S") == 0)
                 {
                     Serial.println("S");
-                    setpoint = -0.8; // setpoint for PID for backward, 1 degree
+                    setpoint = -0.9; // setpoint for PID for backward, 1 degree
                     stop_flag = 0;
                     turning = 0;
                     setpoint_speed = -10;
                     turning_left_w = 0;
                     turning_right_w = 0;
-                    
                 }
                 else if (strcmp(receivedString, "A") == 0) // turning left 
                 { // left
@@ -234,50 +233,43 @@ void loop()
                 else if (strcmp(receivedString, "D") == 0) // turning right
                 { // right
                     Serial.println("D");
-                    turning_left_w = 10;
+                    setpoint = 0.5;
+                    turning_left_w = 30;
                     turning_right_w = 0;
                     stop_flag = 0;
                 }
                 else if (strcmp(receivedString, "0") == 0)
-                { // right
+                { 
                     Serial.println("stop");
                     stop_flag = 1;
                     turning_left_w = 0;
                     turning_right_w = 0;
-                    setpoint_speed = 0;
                 }
                 
             }
-            
-
-            theta_n = getAngle(old_theta_n); // angles
-            PWM_a = PID(setpoint, theta_n);
-            old_theta_n = theta_n;
-
-            leftpwm = PWM_vl + PWM_a;
-            rightpwm = PWM_vl + PWM_a ;
-            
-            // if(leftpwm > 0){
-            //     leftpwm -= 10;
-            // }else{
-            //     leftpwm += 10;
-            // }
 
             if (stop_flag){
               setpoint = 0.0;
               setpoint_speed = 0.0;
             } 
 
+            theta_n = getAngle(old_theta_n); // angles
+            PWM_a = PID(setpoint, theta_n);
+            old_theta_n = theta_n;
+
+            leftpwm = abs(PWM_vl + PWM_a);
+            rightpwm = abs(PWM_vl + PWM_a);
+
             totalPWM = PWM_vl + PWM_a;
-            int total_leftpwm = leftpwm + turning_left_w; 
-            int total_rightpwm = rightpwm + turning_right_w; 
+            int total_leftpwm = constrain((leftpwm + turning_left_w)*1.12, 0, 255); 
+            int total_rightpwm = constrain(rightpwm + turning_right_w, 0, 255);
             if (totalPWM > 0)
             {
-                forward_slow(constrain(total_rightpwm, -255, 255), constrain(total_leftpwm, -255,255));
+                forward_slow(total_leftpwm, total_rightpwm);
             }
             else if (totalPWM < 0)
             {
-                backward_slow(rightpwm, leftpwm);
+                backward_slow(leftpwm, rightpwm);
             }
             else
                 forward(0, 0);
@@ -287,10 +279,15 @@ void loop()
             Serial.print("\t");
             Serial.print(total_rightpwm);
             Serial.print("\t");
-            Serial.print(setpoint);
+            Serial.print(leftpwm);
             Serial.print("\t");
-            Serial.println(setpoint_speed);
-
+            Serial.print(rightpwm);
+            Serial.print("\t");
+            Serial.print(turning_left_w);
+            Serial.print("\t");
+            Serial.print(turning_right_w);
+            Serial.print("\t");
+            Serial.println(totalPWM);
         } // Central Closed
     }
     else
@@ -305,13 +302,6 @@ void loop()
         
 
         // ------------------------- Speed Controller -----------------------------
-
-        // currentSpeed = encoder.getAngularSpeed(AS5600_MODE_DEGREES, true); // deg/sec
-        // speedError = targetSpeed - currentSpeed;
-        // speedIntegral += speedError * dt;                      // dt in seconds
-        // speedIntegral = constrain(speedIntegral, -1000, 1000); // anti-windup
-        // output_v = constrain(Kp_v * speedError + Ki_v * speedIntegral, -maxTilt, maxTilt);
-
         // --- Left Encoder (Channel 0) ---
         I2CMux.openChannel(0);
         rpmLeft = readRPM(prevAngleLeft, prevTimeLeft, encoderLeft);
@@ -344,11 +334,11 @@ void loop()
         totalPWM = PWM_vl + PWM_a;
         if (totalPWM > 0)
         {
-            forward_slow(rightpwm, leftpwm);
+            forward_slow(leftpwm, rightpwm); // originally rightpwm, leftpwm
         }
         else if (totalPWM < 0)
         {
-            backward_slow(rightpwm, leftpwm);
+            backward_slow(leftpwm, rightpwm);
         }
         else
             forward(0, 0);
@@ -377,6 +367,9 @@ float PID_speed(float filteredRPM, float targetSpeed)
     if (Encoder_Integral < -700)
         Encoder_Integral = -700;
 
+    if (theta_n > 35 || theta_n < -35 )
+        Encoder_Integral = 0;
+    
     // PI controller
     pwm_speed = Kp_v * Encoder + Ki_v * Encoder_Integral;
 

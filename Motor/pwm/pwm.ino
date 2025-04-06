@@ -1,7 +1,12 @@
-#define AIN1 2
-#define AIN2 3
-#define BIN2 4
-#define BIN1 5
+// #define LEFT1 2
+// #define LEFT2 3
+// #define RIGHT2 4
+// #define RIGHT1 5
+
+#define LEFT1 4  //  LEFT1, RIGHT1 yellow wire
+#define LEFT2 5  //  LEFT2, RIGHT2 yellow wire
+#define RIGHT1 2 //  LEFT1, RIGHT1 green wire
+#define RIGHT2 3 //  LEFT2, RIGHT2 green wire
 
 #include <math.h>
 
@@ -24,29 +29,29 @@ float rpm_to_pwm_right(float rpm){
 
 void setup() {
   // put your setup code here, to run once:
-    pinMode(BIN1, OUTPUT);
-    pinMode(BIN2, OUTPUT);
-    pinMode(AIN1, OUTPUT);
-    pinMode(AIN2, OUTPUT);
+    pinMode(LEFT1, OUTPUT);
+    pinMode(LEFT2, OUTPUT);
+    pinMode(RIGHT1, OUTPUT);
+    pinMode(RIGHT2, OUTPUT);
 
 }
 
 // foward fast decay
 
 void forward(int pwm1, int pwm2){
-  analogWrite(AIN1, pwm1);   
-  digitalWrite(AIN2, LOW);   
-  analogWrite(BIN1, pwm2); 
-  digitalWrite(BIN2, LOW); 
+  analogWrite(LEFT1, pwm1);   
+  digitalWrite(LEFT2, LOW);   
+  analogWrite(RIGHT1, pwm2); 
+  digitalWrite(RIGHT2, LOW); 
 }
 
 
 // reverse fast decay
 void backward(int pwm1, int pwm2) {  
-    digitalWrite(AIN1, LOW);   
-    analogWrite(AIN2, pwm1);   
-    digitalWrite(BIN1, LOW); 
-    analogWrite(BIN2, pwm2);  
+    digitalWrite(LEFT1, LOW);   
+    analogWrite(LEFT2, pwm1);   
+    digitalWrite(RIGHT1, LOW); 
+    analogWrite(RIGHT2, pwm2);  
 }
 
 //left forward, right backward
@@ -54,111 +59,54 @@ void backward(int pwm1, int pwm2) {
 void lfw_rbw(int pwm1, int pwm2){ 
 
   // Right motor forward
-  analogWrite(AIN1, pwm1);  
-  digitalWrite(AIN2, LOW);
+  analogWrite(LEFT1, pwm1);  
+  digitalWrite(LEFT2, LOW);
   
-  analogWrite(BIN2, pwm2);
-  digitalWrite(BIN1, LOW);
+  analogWrite(RIGHT2, pwm2);
+  digitalWrite(RIGHT1, LOW);
 
  
 }
 
 //right foward, left backward
 void rfw_lbw(int pwm1, int pwm2){ 
-  analogWrite(AIN2, pwm1); 
-  digitalWrite(AIN1, LOW);
+  analogWrite(LEFT2, pwm1); 
+  digitalWrite(LEFT1, LOW);
 
-  analogWrite(BIN1, pwm2);
-  digitalWrite(BIN2, LOW);
+  analogWrite(RIGHT1, pwm2);
+  digitalWrite(RIGHT2, LOW);
 }
 
-// slow decay
-void forward_slow(int pwm1, int pwm2){
-  analogWrite(AIN2, pwm1);   
-  digitalWrite(AIN1, HIGH); 
-
-  analogWrite(BIN2, pwm2); 
-  digitalWrite(BIN1, HIGH); 
-}
-
-// reverse slow decay
-void backward_slow(int pwm1, int pwm2) {  
-    digitalWrite(AIN2, HIGH);   
-    analogWrite(AIN1, pwm1);
-
-    digitalWrite(BIN2, HIGH); 
-    analogWrite(BIN1, pwm2);  
-}
-
-//left forward, right backward
-// A left, B right
-void lfw_rbw_slow(int pwm1, int pwm2){ 
-
-  // Right motor forward
-  analogWrite(AIN2, pwm1);  
-  digitalWrite(AIN1, HIGH);
+  // slow decay
+void backward_slow(int pwm1, int pwm2){
+    pwm1 = map(abs(pwm1),0,255,250,0);   
+    pwm2 = map(abs(pwm2),0,255,250,0); 
+    analogWrite(LEFT2, pwm1);   
+    digitalWrite(LEFT1, HIGH); 
   
-  analogWrite(BIN1, pwm2);
-  digitalWrite(BIN2, HIGH);
-
- 
-}
-
-//right foward, left backward
-void rfw_lbw_slow(int pwm1, int pwm2){ 
-  analogWrite(AIN1, pwm1); 
-  digitalWrite(AIN2, HIGH);
-
-  analogWrite(BIN2, pwm2);
-  digitalWrite(BIN1, HIGH);
-}
+    analogWrite(RIGHT2, pwm2); 
+    digitalWrite(RIGHT1, HIGH); 
+  }
+  
+  void forward_slow(int pwm1, int pwm2) {  
+    pwm1 = map(abs(pwm1),0,255,250,0);   
+    pwm2 = map(abs(pwm2),0,255,250,0); 
+      digitalWrite(LEFT2, HIGH);   
+      analogWrite(LEFT1, pwm1);
+  
+      digitalWrite(RIGHT2, HIGH); 
+      analogWrite(RIGHT1, pwm2);  
+  }
 
 
 void loop() {
 
-  // //---------------------------------------------------------------
+  int leftpwm = 200; // Example PWM value for left motor
+  int rightpwm = 20; // Example PWM value for right motor
 
-  // rfw_lbw(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
-  // delay(3000); // wait for 5 sec
+    forward_slow(leftpwm, rightpwm); 
 
-
-  rfw_lbw_slow(rpm_to_pwm_left(420), rpm_to_pwm_right(437));
-  delay(3000); // wait for 5 sec
-
-  // forward(rpm_to_pwm_left(420 * 3 / 4), rpm_to_pwm_right(437 * 3 / 4));
-  // delay(3000); 
-
-  // forward(rpm_to_pwm_left(420 / 2), rpm_to_pwm_right(437 / 2));
-  // delay(3000); 
-
-  // forward(rpm_to_pwm_left(420 / 4), rpm_to_pwm_right(437 / 4));
-  // delay(3000);
-
-  // //---------------------------------------------------------------
-
-  // backward(rpm_to_pwm_left(420 * 3 / 4), rpm_to_pwm_right(437 * 3 / 4));
-  // delay(3000); 
-
-  // backward(rpm_to_pwm_left(420 / 4), rpm_to_pwm_right(437 / 4));
-  // delay(3000);
-
-  //---------------------------------------------------------------
-  
-  // lfw_rbw(rpm_to_pwm_left(420*3/4), rpm_to_pwm_right(437*3/4));
-  // delay(3000);
-
-  // lfw_rbw(rpm_to_pwm_left(420 / 4), rpm_to_pwm_right(437 / 4));
-  // delay(3000);
-
-  //---------------------------------------------------------------
-
-  // rfw_lbw(rpm_to_pwm_left(420*3/4), rpm_to_pwm_right(437*3/4));
-  // delay(3000);
-  
-  // rfw_lbw(rpm_to_pwm_left(420/4), rpm_to_pwm_right(437/4));
-  // delay(3000);
-
-  //delay(10);
+    delay(10);
 
 
 }
