@@ -3,12 +3,14 @@ import urllib.request #to open and read URL
 import numpy as np
 from send_email_utils import send_email_with_frame
 
+url = input("Enter your ESP32 camera URL (e.g., http://192.168.137.80/jpeg): ")
+
 #OBJECT CLASSIFICATION PROGRAM FOR VIDEO IN IP ADDRESS
 sender_email="qiuyuhan66@gmail.com"
-receiver_email="jennify868@gmail.com"
+receiver_email="qiuyuhan66@gmail.com"
 app_password="zklynsxlbrsvoyrv"
 
-url = 'http://192.168.137.134/jpeg'
+# url = 'http://192.168.137.80/jpeg'
 winName = 'ESP32 CAMERA'
 cv2.namedWindow(winName,cv2.WINDOW_AUTOSIZE)
 #scale_percent = 80 # percent of original size    #for image processing

@@ -128,18 +128,6 @@ float getAngle(float theta_n)
 
     float dt = (float) (micros() - ct) / 1000000;  // gets time for ∆t
     ct = micros();  // sets new current time
-    
-    // if (IMU.accelerationAvailable())
-    // {
-    //     IMU.readAcceleration(x, y, z);
-    //     theta_an = atan(y / z) * 180 / M_PI; // might need to change the axis later
-    // }
-
-    // if (IMU.gyroscopeAvailable())
-    // {
-    //     IMU.readGyroscope(x, y, z);
-    //     theta_gn += x * (1 / IMU.gyroscopeSampleRate());
-    // }
 
     if (IMU.gyroscopeAvailable()) {
         // reads gyroscope value
@@ -163,3 +151,32 @@ float getAngle(float theta_n)
 }
 
 //-------------------------------------------------------------------------
+void driveMotors(int leftPWM, int rightPWM)
+{
+    // Clamp values
+    leftPWM = constrain(leftPWM, -255, 255);
+    rightPWM = constrain(rightPWM, -255, 255);
+
+    // If both wheels are stopped
+    if (leftPWM == 0 && rightPWM == 0) {
+        forward(0, 0); // or brake if you want
+        return;
+    }
+
+    // Case 1: both forward
+    if (leftPWM > 0 && rightPWM > 0) {
+        forward(abs(leftPWM), abs(rightPWM));
+    }
+    // Case 2: both backward
+    else if (leftPWM < 0 && rightPWM < 0) {
+        backward(abs(leftPWM), abs(rightPWM));
+    }
+    // Case 3: turning in place (left forward, right backward)
+    else if (leftPWM > 0 && rightPWM < 0) {
+        lfw_rbw(abs(leftPWM), abs(rightPWM));
+    }
+    // Case 4: turning in place (right forward, left backward)
+    else if (leftPWM < 0 && rightPWM > 0) {
+        rfw_lbw(abs(leftPWM), abs(rightPWM));
+    }
+}

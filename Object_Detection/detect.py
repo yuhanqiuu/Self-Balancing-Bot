@@ -4,7 +4,7 @@ import numpy as np
 
 #OBJECT CLASSIFICATION PROGRAM FOR VIDEO IN IP ADDRESS
 
-url = 'http://192.168.137.33/jpeg'
+url = 'http://192.168.137.80/jpeg'
 #url = 'http://192.168.1.6/'
 winName = 'ESP32 CAMERA'
 cv2.namedWindow(winName,cv2.WINDOW_AUTOSIZE)

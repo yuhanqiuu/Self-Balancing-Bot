@@ -82,8 +82,8 @@ int turning_right_w = 0;
 //-------------------------------------------------------------------------
 
 // Turning Control Parameters
-float Kp_tu = 10;
-float Kd_tu = -10;
+float Kp_tu = 5;
+float Kd_tu = -5;
 float PWM_tu = 0;
 
 //-------------------------------------------------------------------------
@@ -298,36 +298,36 @@ void loop()
     {
         keyboard_test();
 
-        // // ------------------------- Angle PID Controller -------------------------
+        // ------------------------- Angle PID Controller -------------------------
 
-        // theta_n = getAngle(old_theta_n); // angles
-        // PWM_a = PID(setpoint, theta_n);
-        // old_theta_n = theta_n;
+        theta_n = getAngle(old_theta_n); // angles
+        PWM_a = PID(setpoint, theta_n);
+        old_theta_n = theta_n;
 
-        // // ------------------------- Speed Controller -----------------------------
-        // // --- Left Encoder (Channel 0) ---
-        // I2CMux.openChannel(0);
-        // rpmLeft = readRPM(prevAngleLeft, prevTimeLeft, encoderLeft);
-        // I2CMux.closeChannel(0);
+        // ------------------------- Speed Controller -----------------------------
+        // --- Left Encoder (Channel 0) ---
+        I2CMux.openChannel(0);
+        rpmLeft = readRPM(prevAngleLeft, prevTimeLeft, encoderLeft);
+        I2CMux.closeChannel(0);
 
-        // // --- Right Encoder (Channel 1) ---
-        // I2CMux.openChannel(1);
-        // rpmRight = -readRPM(prevAngleRight, prevTimeRight, encoderRight); // Negate if needed for direction
-        // I2CMux.closeChannel(1);
+        // --- Right Encoder (Channel 1) ---
+        I2CMux.openChannel(1);
+        rpmRight = -readRPM(prevAngleRight, prevTimeRight, encoderRight); // Negate if needed for direction
+        I2CMux.closeChannel(1);
 
-        // // --- Filter ---
-        // filteredRPMLeft = alpha * rpmLeft + (1 - alpha) * filteredRPMLeft;
-        // filteredRPMRight = alpha * rpmRight + (1 - alpha) * filteredRPMRight;
+        // --- Filter ---
+        filteredRPMLeft = alpha * rpmLeft + (1 - alpha) * filteredRPMLeft;
+        filteredRPMRight = alpha * rpmRight + (1 - alpha) * filteredRPMRight;
 
-        // if (abs(filteredRPMLeft) < noiseThreshold)
-        //     filteredRPMLeft = 0;
-        // if (abs(filteredRPMRight) < noiseThreshold)
-        //     filteredRPMRight = 0;
+        if (abs(filteredRPMLeft) < noiseThreshold)
+            filteredRPMLeft = 0;
+        if (abs(filteredRPMRight) < noiseThreshold)
+            filteredRPMRight = 0;
 
-        // Ki_v = Kp_v / 200.0;
+        Ki_v = Kp_v / 200.0;
 
-        // PWM_vl = PID_speed(filteredRPMLeft, setpoint_speed);
-        PWM_tu = PID_turn(0);
+        PWM_vl = PID_speed(filteredRPMLeft, setpoint_speed);
+        // PWM_tu = PID_turn(0);
 
         // ------------------------- PWM Assignment-----------------------------
 
@@ -335,22 +335,11 @@ void loop()
         rightpwm = PWM_vl + PWM_a - PWM_tu;
         totalPWM = PWM_vl + PWM_a - PWM_tu;
 
-        if (totalPWM > 0)
-        {
-            forward_slow(rightpwm, leftpwm);
-        }
-        else if (totalPWM < 0)
-        {
-            backward_slow(rightpwm, leftpwm);
-        }
-        else
-            forward(0, 0);
+        driveMotors(leftpwm, rightpwm);
 
         Serial.print(leftpwm);
         Serial.print("\t");
-        Serial.print(rightpwm);
-        Serial.print("\t");
-        Serial.println(totalPWM);
+        Serial.println(rightpwm);
     }
 }
 
@@ -521,6 +510,8 @@ float readRPM(float &previousAngle, unsigned long &previousTime, AS5600 &encoder
 
 float PID_turn(float Set_turn)
 {
+    // + Set_turn -> turn left
+    // - Set_turn -> turn right
     float gyro_x, gyro_y, gyro_z;
     float outpid = 0.0;
 

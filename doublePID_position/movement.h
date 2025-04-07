@@ -23,6 +23,7 @@ void backward_slow(int pwm1, int pwm2);
 void lfw_rbw_slow(int pwm1, int pwm2);
 void rfw_lbw_slow(int pwm1, int pwm2);
 
+void driveMotors(int leftPWM, int rightPWM);
 
 void goForward();
 void goBackward();

@@ -299,7 +299,6 @@ void loop()
         theta_n = getAngle(old_theta_n); // angles
         PWM_a = PID(setpoint, theta_n);
         old_theta_n = theta_n;
-        
 
         // ------------------------- Speed Controller -----------------------------
         // --- Left Encoder (Channel 0) ---

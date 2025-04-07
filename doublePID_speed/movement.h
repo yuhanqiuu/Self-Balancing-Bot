@@ -40,5 +40,7 @@ void backward_slow_v2(int pwm1, int pwm2);
 void lfw_rbw_slow(int pwm1, int pwm2);
 void rfw_lbw_slow(int pwm1, int pwm2);
 
+void driveMotors(int leftPWM, int rightPWM);
+
 float getAngle(float old_theta_n);
 #endif
