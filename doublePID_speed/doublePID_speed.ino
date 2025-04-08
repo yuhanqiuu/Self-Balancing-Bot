@@ -81,6 +81,7 @@ int turning = 0;
 
 int turning_left_w = 0;
 int turning_right_w = 0;
+int turning_offest = 0;
 //-------------------------------------------------------------------------
 
 // Define a custom BLE service and characteristic
@@ -212,6 +213,7 @@ void loop()
                     setpoint_speed = 20;
                     turning_left_w = 0;
                     turning_right_w = 0;
+                    turning_offest = 0;
                 }
                 else if (strcmp(receivedString, "S") == 0)
                 {
@@ -222,6 +224,7 @@ void loop()
                     setpoint_speed = -20;
                     turning_left_w = 0;
                     turning_right_w = 0;
+                    turning_offest = 0;
                 }
                 else if (strcmp(receivedString, "A") == 0) // turning left 
                 { // left
@@ -229,13 +232,16 @@ void loop()
                     turning_left_w = 0;
                     turning_right_w = 10;
                     stop_flag = 0;
+                    turning_offest = -10;
                 }
                 else if (strcmp(receivedString, "D") == 0) // turning right
                 { // right
                     Serial.println("D");
                     turning_left_w = 40;
-                    turning_right_w = 0;
+                    turning_right_w = 1;
                     stop_flag = 0;
+
+                    turning_offest = 10;
                 }
                 else if (strcmp(receivedString, "0") == 0)
                 { 
@@ -243,29 +249,41 @@ void loop()
                     stop_flag = 1;
                     turning_left_w = 0;
                     turning_right_w = 0;
+                    turning_offest = 0;
                 }
                 
             }
 
             if (stop_flag){
-              setpoint = 0.0;
-              setpoint_speed = 0.0;
+                setpoint = 0.0;
+                setpoint_speed = 0.0;
+                turning_left_w = 0;
+                turning_right_w = 0;
+                turning_offest = 0;
             } 
 
             theta_n = getAngle(old_theta_n); // angles
             PWM_a = PID(setpoint, theta_n);
             old_theta_n = theta_n;
 
-            leftpwm = abs(PWM_vl + PWM_a);
-            rightpwm = abs(PWM_vl + PWM_a);
+            leftpwm = PWM_vl + PWM_a;
+            rightpwm = PWM_vl + PWM_a;
 
-            // totalPWM = PWM_vl + PWM_a;
-            int total_leftpwm = constrain((leftpwm + turning_left_w), 0, 255); 
-            int total_rightpwm = constrain((rightpwm + turning_right_w), 0, 255);
+            totalPWM = PWM_vl + PWM_a;
+            int total_leftpwm = constrain(leftpwm + turning_offest, -255, 255); 
+            int total_rightpwm = constrain(rightpwm - turning_offest, -255, 255);
 
             // if (leftpwm > 0 && rightpwm > 0)
             // {
-            //     forward_slow(total_leftpwm, total_rightpwm);
+            //     if (turning_right_w) {
+            //         forward_slow(total_leftpwm, total_rightpwm);
+            //     }
+            //     else if (turning_left_w) {
+            //         backward_slow(total_leftpwm, total_rightpwm);
+            //     }
+            //     else {
+            //         forward_slow(total_leftpwm, total_rightpwm);
+            //     }
             // }
             // else if (leftpwm < 0 && rightpwm < 0)
             // {
@@ -274,9 +292,19 @@ void loop()
             // else
             //     forward(0, 0);
 
-            driveMotors(total_leftpwm, total_rightpwm);
+            if (totalPWM>0)
+            {
+                forward_slow(total_leftpwm, total_rightpwm);
+            }
+            else if (totalPWM<0)
+            {
+                backward_slow(leftpwm, rightpwm);
+            }
+            else
+                forward(0, 0);
 
 
+            // driveMotors(total_leftpwm, total_rightpwm);
             
             Serial.print(total_leftpwm);
             Serial.print("\t");
