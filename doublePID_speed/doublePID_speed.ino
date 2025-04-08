@@ -99,9 +99,9 @@ float PID(float setpoint, float currentValue);
 
 void setup()
 {
-    Serial.begin(9600);
-    while (!Serial);
-    Serial.setTimeout(10);
+    // Serial.begin(9600);
+    // while (!Serial);
+    // Serial.setTimeout(10);
 
     // Initialize IMU for self-balancing
     if (!IMU.begin())
@@ -209,7 +209,7 @@ void loop()
                     setpoint = 0.9; // setpoint for PID for forward, 1 degree
                     stop_flag = 0;
                     turning = 0;
-                    setpoint_speed = 10;
+                    setpoint_speed = 20;
                     turning_left_w = 0;
                     turning_right_w = 0;
                 }
@@ -219,7 +219,7 @@ void loop()
                     setpoint = -0.9; // setpoint for PID for backward, 1 degree
                     stop_flag = 0;
                     turning = 0;
-                    setpoint_speed = -10;
+                    setpoint_speed = -20;
                     turning_left_w = 0;
                     turning_right_w = 0;
                 }
@@ -233,8 +233,7 @@ void loop()
                 else if (strcmp(receivedString, "D") == 0) // turning right
                 { // right
                     Serial.println("D");
-                    setpoint = 0.5;
-                    turning_left_w = 30;
+                    turning_left_w = 40;
                     turning_right_w = 0;
                     stop_flag = 0;
                 }
@@ -260,19 +259,23 @@ void loop()
             leftpwm = abs(PWM_vl + PWM_a);
             rightpwm = abs(PWM_vl + PWM_a);
 
-            totalPWM = PWM_vl + PWM_a;
-            int total_leftpwm = constrain((leftpwm + turning_left_w)*1.12, 0, 255); 
-            int total_rightpwm = constrain(rightpwm + turning_right_w, 0, 255);
-            if (totalPWM > 0)
-            {
-                forward_slow(total_leftpwm, total_rightpwm);
-            }
-            else if (totalPWM < 0)
-            {
-                backward_slow(leftpwm, rightpwm);
-            }
-            else
-                forward(0, 0);
+            // totalPWM = PWM_vl + PWM_a;
+            int total_leftpwm = constrain((leftpwm + turning_left_w), 0, 255); 
+            int total_rightpwm = constrain((rightpwm + turning_right_w), 0, 255);
+
+            // if (leftpwm > 0 && rightpwm > 0)
+            // {
+            //     forward_slow(total_leftpwm, total_rightpwm);
+            // }
+            // else if (leftpwm < 0 && rightpwm < 0)
+            // {
+            //     backward_slow(leftpwm, rightpwm);
+            // }
+            // else
+            //     forward(0, 0);
+
+            driveMotors(total_leftpwm, total_rightpwm);
+
 
             
             Serial.print(total_leftpwm);
@@ -331,44 +334,19 @@ void loop()
         rightpwm = PWM_vl + PWM_a;
 
         totalPWM = PWM_vl + PWM_a;
-        int total_leftpwm = constrain((leftpwm + turning_left_w) * 1.12, -255, 255); 
+        int total_leftpwm = constrain((leftpwm + turning_left_w), -255, 255); 
         int total_rightpwm = constrain(rightpwm + turning_right_w, -255, 255);
-        if (totalPWM > 0)
-        {
-            forward_slow(rightpwm, leftpwm); // originally rightpwm, leftpwm
-        }
-        else if (totalPWM < 0)
-        {
-            backward_slow(rightpwm, leftpwm);
-        }
-        else
-            forward(0, 0);
-
-        Serial.print(totalPWM, 2);
-        Serial.print("\t");
-        Serial.print(PWM_a, 2);
-        Serial.print("\t");
-        // Serial.print(PWM_v, 2);
-        // Serial.print("\t");
-        Serial.print(theta_n);
-        Serial.print("\t");
-        // Serial.print(leftpwm);
-        // Serial.print("\t");
-        // Serial.print(rightpwm);
-        // Serial.print("\t");
-        Serial.print(K_mast);
-        Serial.print("\t");
-        Serial.print(Kp);
-        Serial.print("\t");
-        Serial.print(Ki);
-        Serial.print("\t");
-        Serial.print(Kd);
-        Serial.print("\t");
-        Serial.print(Kp_v);
-        Serial.print("\t");
-        Serial.println(Ki_v);
-        // Serial.print("\t");
-        // Serial.println(result); // ends the line
+        // if (totalPWM > 0)
+        // {
+        //     forward_slow(rightpwm, leftpwm); // originally rightpwm, leftpwm
+        // }
+        // else if (totalPWM < 0)
+        // {
+        //     backward_slow(rightpwm, leftpwm);
+        // }
+        // else
+        //     forward(0, 0);
+        driveMotors(total_leftpwm, total_rightpwm);
     }
 }
 
@@ -481,6 +459,14 @@ void keyboard_test(void)
     else if (input == "km")
     {
         task = 7;
+    }
+    else if (input == "tl")
+    {
+        task = 8;
+    }
+    else if (input == "tr")
+    {
+        task = 9;
     }
 
     switch (task)

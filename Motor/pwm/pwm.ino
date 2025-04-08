@@ -3,12 +3,20 @@
 // #define RIGHT2 4
 // #define RIGHT1 5
 
-#define LEFT1 4  //  LEFT1, RIGHT1 yellow wire
-#define LEFT2 5  //  LEFT2, RIGHT2 yellow wire
-#define RIGHT1 2 //  LEFT1, RIGHT1 green wire
-#define RIGHT2 3 //  LEFT2, RIGHT2 green wire
+// #define LEFT1 4  //  LEFT1, RIGHT1 yellow wire
+// #define LEFT2 5  //  LEFT2, RIGHT2 yellow wire
+// #define RIGHT1 2 //  LEFT1, RIGHT1 green wire
+// #define RIGHT2 3 //  LEFT2, RIGHT2 green wire
+
+#define RIGHT1 2  //  AIN1, BIN1 yellow wire
+#define RIGHT2 3  //  AIN2, BIN2 yellow wire
+#define LEFT2 4 //  AIN2, BIN2 green wire
+#define LEFT1 5 //  AIN1, BIN1 green wire
+
+
 
 #include <math.h>
+#include <Arduino.h>
 
 // pwm=7.58e^(7.89E-3*rpm) with screw left wheel
 // max rpm = 420
@@ -79,24 +87,55 @@ void rfw_lbw(int pwm1, int pwm2){
 
   // slow decay
 void backward_slow(int pwm1, int pwm2){
+  pwm1 = map(abs(pwm1),0,255,250,0);   
+  pwm2 = map(abs(pwm2),0,255,250,0); 
+  analogWrite(LEFT2, pwm1);   
+  digitalWrite(LEFT1, HIGH); 
+
+  analogWrite(RIGHT2, pwm2); 
+  digitalWrite(RIGHT1, HIGH); 
+}
+  
+void forward_slow(int pwm1, int pwm2) {  
+  pwm1 = map(abs(pwm1),0,255,250,0);   
+  pwm2 = map(abs(pwm2),0,255,250,0); 
+  digitalWrite(LEFT2, HIGH);   
+  analogWrite(LEFT1, pwm1);
+
+  digitalWrite(RIGHT2, HIGH); 
+  analogWrite(RIGHT1, pwm2);  
+}
+
+void lfw_rbw_slow(int pwm1, int pwm2){ 
+  
+    // Right motor forward
+
     pwm1 = map(abs(pwm1),0,255,250,0);   
     pwm2 = map(abs(pwm2),0,255,250,0); 
-    analogWrite(LEFT2, pwm1);   
-    digitalWrite(LEFT1, HIGH); 
+
+  digitalWrite(LEFT2, HIGH);   
+  analogWrite(LEFT1, pwm1);
   
     analogWrite(RIGHT2, pwm2); 
-    digitalWrite(RIGHT1, HIGH); 
+    digitalWrite(RIGHT1, HIGH);
+  
+   
   }
   
-  void forward_slow(int pwm1, int pwm2) {  
+  //right foward, left backward
+  void rfw_lbw_slow(int pwm1, int pwm2){ 
     pwm1 = map(abs(pwm1),0,255,250,0);   
     pwm2 = map(abs(pwm2),0,255,250,0); 
-      digitalWrite(LEFT2, HIGH);   
-      analogWrite(LEFT1, pwm1);
-  
-      digitalWrite(RIGHT2, HIGH); 
-      analogWrite(RIGHT1, pwm2);  
+
+
+    analogWrite(LEFT2, pwm1);   
+    digitalWrite(LEFT1, HIGH);
+
+    digitalWrite(RIGHT2, HIGH); 
+    analogWrite(RIGHT1, pwm2);
+    
   }
+
 
 
 void loop() {
@@ -104,9 +143,9 @@ void loop() {
   int leftpwm = 200; // Example PWM value for left motor
   int rightpwm = 20; // Example PWM value for right motor
 
-    forward_slow(leftpwm, rightpwm); 
+  lfw_rbw_slow(leftpwm, rightpwm); 
 
-    delay(10);
+  delay(10);
 
-
+  
 }

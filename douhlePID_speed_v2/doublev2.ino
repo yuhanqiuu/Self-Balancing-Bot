@@ -82,9 +82,10 @@ int turning_right_w = 0;
 //-------------------------------------------------------------------------
 
 // Turning Control Parameters
-float Kp_tu = 5;
-float Kd_tu = -5;
+float Kp_tu = 0.1;
+float Kd_tu = -1;
 float PWM_tu = 0;
+float angle_turn = 0.1;
 
 //-------------------------------------------------------------------------
 
@@ -105,9 +106,9 @@ float PID_turn(float Set_turn);
 
 void setup()
 {
-    //     // Serial.begin(9600);
-    //     // while (!Serial);
-    //     // Serial.setTimeout(10);
+    Serial.begin(9600);
+    while (!Serial);
+    Serial.setTimeout(10);
 
     // Initialize IMU for self-balancing
     if (!IMU.begin())
@@ -327,12 +328,12 @@ void loop()
         Ki_v = Kp_v / 200.0;
 
         PWM_vl = PID_speed(filteredRPMLeft, setpoint_speed);
-        // PWM_tu = PID_turn(0);
+        PWM_tu = PID_turn(angle_turn);
 
         // ------------------------- PWM Assignment-----------------------------
 
-        leftpwm = PWM_vl + PWM_a + PWM_tu;
-        rightpwm = PWM_vl + PWM_a - PWM_tu;
+        leftpwm = constrain(PWM_vl + PWM_a + PWM_tu, -255,255);
+        rightpwm = constrain(PWM_vl + PWM_a - PWM_tu, -255,255);
         totalPWM = PWM_vl + PWM_a;
 
         // if (totalPWM > 0)
@@ -347,6 +348,14 @@ void loop()
         //     forward(0, 0);
         driveMotors(leftpwm, rightpwm);
 
+        Serial.print(Kp_tu);
+        Serial.print("\t");
+        Serial.print(Kd_tu);
+        Serial.print("\t");
+        Serial.print(angle_turn);
+        Serial.print("\t");
+        Serial.print(PWM_tu);
+        Serial.print("\t");
         Serial.print(leftpwm);
         Serial.print("\t");
         Serial.println(rightpwm);
@@ -462,6 +471,18 @@ void keyboard_test(void)
     {
         task = 7;
     }
+    else if (input == "kpt")
+    {
+        task = 8;
+    }
+    else if (input == "kdt")
+    {
+        task = 9;
+    }
+    else if (input == "turn")
+    {
+        task = 10;
+    }
 
     switch (task)
     {
@@ -493,7 +514,22 @@ void keyboard_test(void)
         if (input == "0" || input.toFloat() > 0)
             K_mast = input.toFloat();
         break;
+    case 8:
+        if (input == "0" || input.toFloat() > 0)
+            Kp_tu = input.toFloat();
+        break;
+
+    case 9:
+        if (input == "0" || input.toFloat() > 0)
+            Kd_tu = input.toFloat();
+        break;
+
+    case 10:
+        if (input == "0" || input.toFloat() > 0)
+            angle_turn = input.toFloat();
+        break;
     }
+    
 }
 
 //-------------------------------------------------------------------------

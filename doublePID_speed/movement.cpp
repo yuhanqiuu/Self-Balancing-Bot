@@ -81,50 +81,39 @@ void backward_slow(int pwm1, int pwm2){
       analogWrite(RIGHT1, pwm2);  
   }
 
-  void forward_slow_v2(int pwm1, int pwm2) {  
-    pwm1 = map(abs(pwm1),0,255,250,0);   
-    pwm2 = map(abs(pwm2),0,255,250,0); 
-      digitalWrite(LEFT1, HIGH);   
-      analogWrite(LEFT2, pwm1);
-  
-      digitalWrite(RIGHT1, HIGH); 
-      analogWrite(RIGHT2, pwm2);  
-  }
-
-
-  void backward_slow_v2(int pwm1, int pwm2) {
-
-    pwm1 = map(abs(pwm1),0,255,250,0);   
-    pwm2 = map(abs(pwm2),0,255,250,0); 
-    analogWrite(LEFT2, pwm1);   
-    digitalWrite(LEFT1, HIGH); 
-
-    analogWrite(RIGHT1, pwm2); 
-    digitalWrite(RIGHT2, HIGH); 
-  }
   
   //left forward, right backward
   // A left, B right
   void lfw_rbw_slow(int pwm1, int pwm2){ 
   
     // Right motor forward
-    analogWrite(LEFT2, pwm1);  
-    digitalWrite(LEFT1, HIGH);
-    
-    analogWrite(RIGHT1, pwm2);
-    digitalWrite(RIGHT2, HIGH);
+
+    pwm1 = map(abs(pwm1),0,255,250,0);   
+    pwm2 = map(abs(pwm2),0,255,250,0); 
+
+  digitalWrite(LEFT2, HIGH);   
+  analogWrite(LEFT1, pwm1);
+  
+    analogWrite(RIGHT2, pwm2); 
+    digitalWrite(RIGHT1, HIGH);
   
    
   }
   
   //right foward, left backward
   void rfw_lbw_slow(int pwm1, int pwm2){ 
-    analogWrite(LEFT1, pwm1); 
-    digitalWrite(LEFT2, HIGH);
-  
-    analogWrite(RIGHT2, pwm2);
-    digitalWrite(RIGHT1, HIGH);
+    pwm1 = map(abs(pwm1),0,255,250,0);   
+    pwm2 = map(abs(pwm2),0,255,250,0); 
+
+
+    analogWrite(LEFT2, pwm1);   
+    digitalWrite(LEFT1, HIGH);
+
+    digitalWrite(RIGHT2, HIGH); 
+    analogWrite(RIGHT1, pwm2);
+    
   }
+
 
 //-------------------------------------------------------------------------
 
@@ -165,7 +154,7 @@ void driveMotors(int leftPWM, int rightPWM)
 {
   
   // Case 1: both forward
-  if (leftPWM > 0 && rightPWM > 0)
+  if (leftPWM >= 0 && rightPWM >= 0)
   {
     forward_slow(leftPWM, rightPWM);
   }
@@ -177,16 +166,16 @@ void driveMotors(int leftPWM, int rightPWM)
   // // Case 3: turning in place (left forward, right backward)
   // else if (leftPWM > 0 && rightPWM < 0)
   // {
-  //   lfw_rbw(abs(leftPWM), abs(rightPWM));
+  //   lfw_rbw_slow(abs(leftPWM), abs(rightPWM));
   // }
   // // Case 4: turning in place (right forward, left backward)
   // else if (leftPWM < 0 && rightPWM > 0)
   // {
-  //   rfw_lbw(abs(leftPWM), abs(rightPWM));
+  //   rfw_lbw_slow(abs(leftPWM), abs(rightPWM));
   // }
-  // else {
-  //   forward(0, 0); // or brake if you want
-  //   return;
-  // }
+  else {
+    forward(0, 0); // or brake if you want
+    return;
+  }
 
 }
