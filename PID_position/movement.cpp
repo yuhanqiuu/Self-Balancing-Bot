@@ -165,11 +165,11 @@ void driveMotors(int leftPWM, int rightPWM)
 
     // Case 1: both forward
     if (leftPWM > 0 && rightPWM > 0) {
-        forward(abs(leftPWM), abs(rightPWM));
+        forward_slow(abs(leftPWM), abs(rightPWM));
     }
     // Case 2: both backward
     else if (leftPWM < 0 && rightPWM < 0) {
-        backward(abs(leftPWM), abs(rightPWM));
+        backward_slow(abs(leftPWM), abs(rightPWM));
     }
     // Case 3: turning in place (left forward, right backward)
     else if (leftPWM > 0 && rightPWM < 0) {

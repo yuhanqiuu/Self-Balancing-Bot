@@ -311,7 +311,7 @@ void loop()
         I2CMux.closeChannel(0);
 
         // --- Right Encoder (Channel 1) ---
-        I2CMux.openChannel(1);
+        I2CMux.openChannel(1);  
         rpmRight = -readRPM(prevAngleRight, prevTimeRight, encoderRight); // Negate if needed for direction
         I2CMux.closeChannel(1);
 
@@ -333,8 +333,18 @@ void loop()
 
         leftpwm = PWM_vl + PWM_a + PWM_tu;
         rightpwm = PWM_vl + PWM_a - PWM_tu;
-        totalPWM = PWM_vl + PWM_a - PWM_tu;
+        totalPWM = PWM_vl + PWM_a;
 
+        // if (totalPWM > 0)
+        // {
+        //     forward_slow(leftpwm, rightpwm); // originally rightpwm, leftpwm
+        // }
+        // else if (totalPWM < 0)
+        // {
+        //     backward_slow(leftpwm, rightpwm);
+        // }
+        // else
+        //     forward(0, 0);
         driveMotors(leftpwm, rightpwm);
 
         Serial.print(leftpwm);

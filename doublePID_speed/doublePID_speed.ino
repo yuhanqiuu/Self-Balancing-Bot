@@ -22,9 +22,9 @@ int task = 0;
 //-------------------------------------------------------------------------
 
 // Angle PID parameters
-float Kp = 21;  // (P)roportional Tuning Parameter 12-14? 18
-float Ki = 0;   // (I)ntegral Tuning Parameter        8
-float Kd = 0.5; // (D)erivative Tuning Parameter   0.6
+float Kp = 21;  // (P)roportional Tuning Parameter 12-14? 21
+float Ki = 0;   // (I)ntegral Tuning Parameter        0
+float Kd = 0.5; // (D)erivative Tuning Parameter   0.5
 float K_mast = 0.6;
 
 float previousError = 0;
@@ -62,7 +62,7 @@ unsigned long prevTimeRight = 0;
 
 float setpoint_speed = 0; // Desired cumulative ticks
 
-float Kp_v = 8;          // Start small, tune upward
+float Kp_v = 8;          // Start small, tune upward    8
 float Ki_v = Kp_v / 200.0; // Prevent slow drift
 
 float PWM_a = 0;
@@ -99,9 +99,9 @@ float PID(float setpoint, float currentValue);
 
 void setup()
 {
-    // Serial.begin(9600);
-    // while (!Serial);
-    // Serial.setTimeout(10);
+    Serial.begin(9600);
+    while (!Serial);
+    Serial.setTimeout(10);
 
     // Initialize IMU for self-balancing
     if (!IMU.begin())
@@ -331,16 +331,44 @@ void loop()
         rightpwm = PWM_vl + PWM_a;
 
         totalPWM = PWM_vl + PWM_a;
+        int total_leftpwm = constrain((leftpwm + turning_left_w) * 1.12, -255, 255); 
+        int total_rightpwm = constrain(rightpwm + turning_right_w, -255, 255);
         if (totalPWM > 0)
         {
-            forward_slow(leftpwm, rightpwm); // originally rightpwm, leftpwm
+            forward_slow(rightpwm, leftpwm); // originally rightpwm, leftpwm
         }
         else if (totalPWM < 0)
         {
-            backward_slow(leftpwm, rightpwm);
+            backward_slow(rightpwm, leftpwm);
         }
         else
             forward(0, 0);
+
+        Serial.print(totalPWM, 2);
+        Serial.print("\t");
+        Serial.print(PWM_a, 2);
+        Serial.print("\t");
+        // Serial.print(PWM_v, 2);
+        // Serial.print("\t");
+        Serial.print(theta_n);
+        Serial.print("\t");
+        // Serial.print(leftpwm);
+        // Serial.print("\t");
+        // Serial.print(rightpwm);
+        // Serial.print("\t");
+        Serial.print(K_mast);
+        Serial.print("\t");
+        Serial.print(Kp);
+        Serial.print("\t");
+        Serial.print(Ki);
+        Serial.print("\t");
+        Serial.print(Kd);
+        Serial.print("\t");
+        Serial.print(Kp_v);
+        Serial.print("\t");
+        Serial.println(Ki_v);
+        // Serial.print("\t");
+        // Serial.println(result); // ends the line
     }
 }
 
